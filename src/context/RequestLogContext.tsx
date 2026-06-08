@@ -8,6 +8,7 @@ export interface RequestLogEntry {
   requestBody: unknown;
   status: number | null;
   statusText: string;
+  responseHeaders: Record<string, string>;
   responseBody: unknown;
   error: string | null;
   durationMs: number | null;
@@ -46,6 +47,7 @@ export const RequestLogProvider = ({ children }: { children: React.ReactNode }) 
       requestBody,
       status: null,
       statusText: '',
+      responseHeaders: {},
       responseBody: null,
       error: null,
       durationMs: null,
@@ -59,6 +61,9 @@ export const RequestLogProvider = ({ children }: { children: React.ReactNode }) 
       const durationMs = Math.round(performance.now() - start);
 
       // Clone to read body without consuming the original
+      const responseHeaders: Record<string, string> = {};
+      response.headers.forEach((value, key) => { responseHeaders[key] = value; });
+
       let responseBody: unknown = null;
       try {
         responseBody = await response.clone().json();
@@ -67,7 +72,7 @@ export const RequestLogProvider = ({ children }: { children: React.ReactNode }) 
       }
 
       setLog(prev => prev.map(e => e.id === id
-        ? { ...e, status: response.status, statusText: response.statusText, responseBody, durationMs }
+        ? { ...e, status: response.status, statusText: response.statusText, responseHeaders, responseBody, durationMs }
         : e
       ));
 

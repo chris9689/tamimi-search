@@ -604,12 +604,13 @@ const NetworkTab = ({ log, onClear }: { log: RequestLogEntry[]; onClear: () => v
         <div className="flex flex-col gap-2">
           {/* Request list */}
           <div className="space-y-1 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
-            {log.map(e => (
+            {log.map((e, i) => (
               <button
                 key={e.id}
                 onClick={() => setSelected(e.id)}
                 className={`w-full text-left px-3 py-2 rounded flex items-center gap-3 transition-colors ${selected === e.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
               >
+                <span className="text-[7px] text-zinc-600 shrink-0 w-5">#{log.length - i}</span>
                 <span className={`text-[8px] font-bold uppercase w-6 shrink-0 ${e.error ? 'text-red-400' : e.status && e.status >= 400 ? 'text-orange-400' : 'text-green-400'}`}>
                   {e.status ?? '…'}
                 </span>
@@ -626,8 +627,18 @@ const NetworkTab = ({ log, onClear }: { log: RequestLogEntry[]; onClear: () => v
           {/* Detail pane */}
           {entry && (
             <div className="border border-white/5 rounded-lg overflow-hidden">
-              <div className="flex gap-0 border-b border-white/5">
-                {(['request', 'response'] as const).map(pane => (
+              <div className="px-3 py-2 bg-black/30 text-[8px] text-zinc-500 font-mono border-b border-white/5">
+                <span className="text-zinc-300 font-bold">{entry.method}</span>
+                {' '}{entry.url}
+                {entry.status != null && (
+                  <span className={`ml-3 font-bold ${entry.status >= 400 ? 'text-orange-400' : 'text-green-400'}`}>
+                    {entry.status} {entry.statusText}
+                  </span>
+                )}
+                {entry.durationMs != null && <span className="ml-3 text-zinc-600">{entry.durationMs}ms</span>}
+              </div>
+              <div className="flex flex-col">
+                {(['request', 'response', 'headers'] as const).map(pane => (
                   <DetailPane key={pane} label={pane} entry={entry} />
                 ))}
               </div>
@@ -639,22 +650,24 @@ const NetworkTab = ({ log, onClear }: { log: RequestLogEntry[]; onClear: () => v
   );
 };
 
-const DetailPane = ({ label, entry }: { label: 'request' | 'response'; entry: RequestLogEntry }) => {
-  const [open, setOpen] = useLocalState(true);
-  const content = label === 'request' ? entry.requestBody : (entry.error ?? entry.responseBody);
+const DetailPane = ({ label, entry }: { label: 'request' | 'response' | 'headers'; entry: RequestLogEntry }) => {
+  const [open, setOpen] = useLocalState(label !== 'headers');
+  const content = label === 'request' ? entry.requestBody
+    : label === 'headers' ? (Object.keys(entry.responseHeaders).length > 0 ? entry.responseHeaders : null)
+    : (entry.error ?? entry.responseBody);
   const isEmpty = content == null;
 
   return (
-    <div className="flex-1 min-w-0">
+    <div className="border-t border-white/5 first:border-t-0">
       <button
         onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between px-3 py-2 text-[8px] uppercase font-bold tracking-wider text-zinc-500 hover:text-zinc-300 transition-colors bg-black/20"
       >
-        {label === 'request' ? 'Request Body' : 'Response Body'}
+        {label === 'request' ? 'Request Body' : label === 'headers' ? 'Response Headers' : 'Response Body'}
         <ChevronDown size={10} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className="p-3 overflow-x-auto max-h-64 custom-scrollbar">
+        <div className="p-3 overflow-x-auto max-h-72 custom-scrollbar">
           {isEmpty ? (
             <span className="text-zinc-700 text-[8px]">—</span>
           ) : (
