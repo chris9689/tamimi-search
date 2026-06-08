@@ -80,10 +80,10 @@ export const RequestLogProvider = ({ children }: { children: React.ReactNode }) 
 
       // Extract upstream details if the proxy included them
       const upstream = (responseBody as any)?._upstream ?? undefined;
-      // Strip _upstream from the displayed response body
+      // Strip _upstream and rawResponse from the displayed response body
       let displayBody = responseBody;
-      if (upstream && responseBody && typeof responseBody === 'object') {
-        const { _upstream, ...rest } = responseBody as any;
+      if (responseBody && typeof responseBody === 'object') {
+        const { _upstream, rawResponse, ...rest } = responseBody as any;
         displayBody = rest;
       }
 

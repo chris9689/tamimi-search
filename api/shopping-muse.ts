@@ -106,7 +106,8 @@ export default async function handler(req: any, res: any) {
   };
 
   try {
-    const response = await fetch('https://dy-api.com/v2/serve/user/agent-assistant', {
+    const upstreamUrl = 'https://dy-api.com/v2/serve/user/agent-assistant';
+    const response = await fetch(upstreamUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -115,6 +116,10 @@ export default async function handler(req: any, res: any) {
       body: JSON.stringify(payload),
     });
 
+    const upstreamHeaders: Record<string, string> = {};
+    response.headers.forEach((value, key) => { upstreamHeaders[key] = value; });
+    const upstream = { url: upstreamUrl, requestBody: payload, status: response.status, statusText: response.statusText, headers: upstreamHeaders };
+
     if (!response.ok) {
       const details = await response.text();
       console.error('[Shopping Muse] API error:', response.status, details);
@@ -122,6 +127,7 @@ export default async function handler(req: any, res: any) {
         error: 'Shopping Muse request failed',
         message: details || `Remote status ${response.status}`,
         details,
+        _upstream: upstream,
       });
     }
 
@@ -135,6 +141,7 @@ export default async function handler(req: any, res: any) {
       widgets: museData?.widgets ?? [],
       warnings: data.warnings ?? [],
       rawResponse: data,
+      _upstream: upstream,
     });
   } catch (error) {
     console.error('[Shopping Muse] Proxy error:', error);

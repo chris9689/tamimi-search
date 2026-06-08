@@ -53,7 +53,8 @@ export default async function handler(req: any, res: any) {
       },
     };
 
-    const response = await fetch('https://dy-api.com/v2/serve/user/search', {
+    const upstreamUrl = 'https://dy-api.com/v2/serve/user/search';
+    const response = await fetch(upstreamUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,12 +63,16 @@ export default async function handler(req: any, res: any) {
       body: JSON.stringify(payload),
     });
 
+    const upstreamHeaders: Record<string, string> = {};
+    response.headers.forEach((value, key) => { upstreamHeaders[key] = value; });
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[Visual Search] API Error:', response.status, errorText);
       return res.status(response.status).json({
         error: `Visual Search API error: ${response.statusText}`,
         details: errorText,
+        _upstream: { url: upstreamUrl, requestBody: { ...payload, query: { ...payload.query, imageBase64: '[redacted]' } }, status: response.status, statusText: response.statusText, headers: upstreamHeaders },
       });
     }
 
@@ -79,6 +84,7 @@ export default async function handler(req: any, res: any) {
       results,
       totalResults,
       rawResponse: data,
+      _upstream: { url: upstreamUrl, requestBody: { ...payload, query: { ...payload.query, imageBase64: '[redacted]' } }, status: response.status, statusText: response.statusText, headers: upstreamHeaders },
     });
   } catch (error) {
     console.error('[Visual Search] Proxy Error:', error);

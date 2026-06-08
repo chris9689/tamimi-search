@@ -30,7 +30,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
     setWidgetFetchError(null);
     try {
       const res = await loggedFetch(
-        `https://recs-worker.use1.dynamicyield.com/api/v1/section/${localConfig.sectionId}/feed/${localConfig.feedId}/widgets`
+        `${localConfig.sectionId?.startsWith('98') ? 'https://recs-worker.euc1.dynamicyield.com' : 'https://recs-worker.use1.dynamicyield.com'}/api/v1/section/${localConfig.sectionId}/feed/${localConfig.feedId}/widgets`
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fetch widgets');
