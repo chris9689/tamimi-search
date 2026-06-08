@@ -59,7 +59,7 @@ const defaultConfig: DYConfig = {
   sectionId: '8787656',
   feedId: '85470',
   widgetId: '464618',
-  experienceApiKey: '',
+  experienceApiKey: '6db1658990995233071fe0221961589aa600a0ffc97c233007c9d3d56ad2b1f2',
   language: 'en_US',
   ctxType: 'HOMEPAGE',
   itemsPerPage: 12,

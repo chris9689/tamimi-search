@@ -189,7 +189,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                       type={showApiKey ? 'text' : 'password'}
                       className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2.5 pr-10 rounded text-zinc-100 focus:border-green-500/50 focus:bg-zinc-800/50 outline-none transition-all placeholder:text-zinc-700"
                       value={localConfig.experienceApiKey}
-                      placeholder="Using server env var (VISUALSEARCH_API_KEY)"
+                      placeholder="Enter Experience API Key..."
                       onChange={e => updateField('experienceApiKey', e.target.value)}
                     />
                     <button
@@ -201,15 +201,6 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                       {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                   </div>
-                  {localConfig.experienceApiKey && (
-                    <button
-                      type="button"
-                      onClick={() => updateField('experienceApiKey', '')}
-                      className="mt-1.5 text-[8px] text-zinc-600 hover:text-red-400 transition-colors"
-                    >
-                      ✕ Clear override — revert to server env var
-                    </button>
-                  )}
                 </div>
                 <div>
                   <ConfigField

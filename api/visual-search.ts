@@ -17,7 +17,7 @@ export default async function handler(req: any, res: any) {
     return res.status(400).json({ error: 'imageBase64 or imageUrl is required and must be a string' });
   }
 
-  const apiKey = clientApiKey || process.env.VISUALSEARCH_API_KEY;
+  const apiKey = clientApiKey || process.env.EXPERIENCE_API_KEY || process.env.VISUALSEARCH_API_KEY;
   if (!apiKey) {
     console.error('[Visual Search] API key not configured');
     return res.status(500).json({ error: 'Visual Search API key not configured' });

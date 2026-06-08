@@ -60,7 +60,7 @@ export default async function handler(req: any, res: any) {
   }
 
   const clientApiKey = typeof (body as any).apiKey === 'string' ? (body as any).apiKey.trim() : '';
-  const apiKey = clientApiKey || ((globalThis as any).process?.env?.SHOPPINGMUSE_API_KEY as string | undefined);
+  const apiKey = clientApiKey || ((globalThis as any).process?.env?.EXPERIENCE_API_KEY as string | undefined) || ((globalThis as any).process?.env?.SHOPPINGMUSE_API_KEY as string | undefined);
   if (!apiKey) {
     console.error('[Shopping Muse] API key not configured');
     return res.status(500).json({ error: 'Shopping Muse API key not configured' });
