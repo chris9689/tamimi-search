@@ -56,10 +56,10 @@ export interface DYConfig {
 }
 
 const defaultConfig: DYConfig = {
-  sectionId: '8768867',
-  feedId: '',
-  widgetId: '',
-  experienceApiKey: 'c14bda8218846291c49041eb6c6f7efd450c5038fddafc360f85702770a19fc6',
+  sectionId: '8787656',
+  feedId: '85470',
+  widgetId: '464618',
+  experienceApiKey: '',
   language: 'en_US',
   ctxType: 'HOMEPAGE',
   itemsPerPage: 12,

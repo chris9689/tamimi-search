@@ -18,8 +18,12 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
   const [widgetFetchError, setWidgetFetchError] = useState<string | null>(null);
 
   const fetchWidgets = async () => {
-    if (!localConfig.sectionId || !localConfig.feedId) {
-      setWidgetFetchError('Section ID and Feed ID are required');
+    if (!localConfig.sectionId) {
+      setWidgetFetchError('Section ID is required');
+      return;
+    }
+    if (!localConfig.feedId) {
+      setWidgetFetchError('Enter a Feed ID first, then fetch widgets');
       return;
     }
     setFetchingWidgets(true);
@@ -183,7 +187,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                       type={showApiKey ? 'text' : 'password'}
                       className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2.5 pr-10 rounded text-zinc-100 focus:border-green-500/50 focus:bg-zinc-800/50 outline-none transition-all placeholder:text-zinc-700"
                       value={localConfig.experienceApiKey}
-                      placeholder="Paste key here..."
+                      placeholder="Using server env var (VISUALSEARCH_API_KEY)"
                       onChange={e => updateField('experienceApiKey', e.target.value)}
                     />
                     <button
@@ -195,6 +199,15 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                       {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                   </div>
+                  {localConfig.experienceApiKey && (
+                    <button
+                      type="button"
+                      onClick={() => updateField('experienceApiKey', '')}
+                      className="mt-1.5 text-[8px] text-zinc-600 hover:text-red-400 transition-colors"
+                    >
+                      ✕ Clear override — revert to server env var
+                    </button>
+                  )}
                 </div>
                 <div>
                   <ConfigField
@@ -221,7 +234,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
               <SectionHeader icon={<Database size={14}/>} title="Core API Resolution" />
               <div className="grid grid-cols-2 gap-4">
                 <ConfigField label="Section ID" value={localConfig.sectionId} onChange={(v: string) => updateField('sectionId', v)} />
-                <ConfigField label="Feed ID" value={localConfig.feedId} onChange={(v: string) => updateField('feedId', v)} />                <div className="col-span-2">
+                <ConfigField label="Feed ID" value={localConfig.feedId} onChange={(v: string) => updateField('feedId', v)} description="Required — find in DY UI → Assets → Feeds" /><div className="col-span-2">
                   <div className="flex justify-between mb-1.5 px-0.5">
                     <label className="text-zinc-400 font-bold uppercase tracking-tighter text-[9px]">Widget ID</label>
                     <button

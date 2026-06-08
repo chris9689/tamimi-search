@@ -73,6 +73,21 @@ export default function App() {
         {showConfig && <ConfigPanel onClose={() => setShowConfig(false)} />}
       </AnimatePresence>
 
+      {/* Not-configured banner */}
+      {!config.feedId && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center justify-between gap-4">
+          <p className="text-amber-800 text-xs font-medium">
+            <span className="font-bold">Feed ID not configured.</span> Open settings to enter your Feed ID for section {config.sectionId}.
+          </p>
+          <button
+            onClick={() => setShowConfig(true)}
+            className="shrink-0 px-4 py-1.5 bg-amber-800 text-white text-xs font-bold uppercase tracking-wider rounded hover:bg-amber-900 transition-colors"
+          >
+            Open Settings
+          </button>
+        </div>
+      )}
+
       {/* Sinsay Header with Frosted Glass */}
       <header className="sticky top-0 z-50 frosted-glass shadow-sm">
         <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between gap-8">
