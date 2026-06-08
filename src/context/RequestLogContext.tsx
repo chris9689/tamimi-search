@@ -12,6 +12,14 @@ export interface RequestLogEntry {
   responseBody: unknown;
   error: string | null;
   durationMs: number | null;
+  // Upstream (DY API) details forwarded by the proxy
+  upstream?: {
+    url: string;
+    requestBody: unknown;
+    status: number;
+    statusText: string;
+    headers: Record<string, string>;
+  };
 }
 
 interface RequestLogContextValue {
@@ -60,7 +68,6 @@ export const RequestLogProvider = ({ children }: { children: React.ReactNode }) 
       const response = await fetch(url, init);
       const durationMs = Math.round(performance.now() - start);
 
-      // Clone to read body without consuming the original
       const responseHeaders: Record<string, string> = {};
       response.headers.forEach((value, key) => { responseHeaders[key] = value; });
 
@@ -71,8 +78,17 @@ export const RequestLogProvider = ({ children }: { children: React.ReactNode }) 
         try { responseBody = await response.clone().text(); } catch {}
       }
 
+      // Extract upstream details if the proxy included them
+      const upstream = (responseBody as any)?._upstream ?? undefined;
+      // Strip _upstream from the displayed response body
+      let displayBody = responseBody;
+      if (upstream && responseBody && typeof responseBody === 'object') {
+        const { _upstream, ...rest } = responseBody as any;
+        displayBody = rest;
+      }
+
       setLog(prev => prev.map(e => e.id === id
-        ? { ...e, status: response.status, statusText: response.statusText, responseHeaders, responseBody, durationMs }
+        ? { ...e, status: response.status, statusText: response.statusText, responseHeaders, responseBody: displayBody, durationMs, upstream }
         : e
       ));
 

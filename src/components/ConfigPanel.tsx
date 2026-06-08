@@ -627,21 +627,42 @@ const NetworkTab = ({ log, onClear }: { log: RequestLogEntry[]; onClear: () => v
           {/* Detail pane */}
           {entry && (
             <div className="border border-white/5 rounded-lg overflow-hidden">
-              <div className="px-3 py-2 bg-black/30 text-[8px] text-zinc-500 font-mono border-b border-white/5">
-                <span className="text-zinc-300 font-bold">{entry.method}</span>
-                {' '}{entry.url}
-                {entry.status != null && (
-                  <span className={`ml-3 font-bold ${entry.status >= 400 ? 'text-orange-400' : 'text-green-400'}`}>
-                    {entry.status} {entry.statusText}
-                  </span>
-                )}
-                {entry.durationMs != null && <span className="ml-3 text-zinc-600">{entry.durationMs}ms</span>}
-              </div>
-              <div className="flex flex-col">
-                {(['request', 'response', 'headers'] as const).map(pane => (
-                  <DetailPane key={pane} label={pane} entry={entry} />
-                ))}
-              </div>
+              {/* Show upstream (DY) details if available, otherwise proxy details */}
+              {entry.upstream ? (
+                <>
+                  <div className="px-3 py-2 bg-black/30 text-[8px] text-zinc-500 font-mono border-b border-white/5">
+                    <span className="text-zinc-600 text-[7px] uppercase tracking-wider mr-2">DY API</span>
+                    <span className="text-zinc-300 font-bold">POST</span>
+                    {' '}{entry.upstream.url}
+                    <span className={`ml-3 font-bold ${entry.upstream.status >= 400 ? 'text-orange-400' : 'text-green-400'}`}>
+                      {entry.upstream.status} {entry.upstream.statusText}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <DetailPane label="request" content={entry.upstream.requestBody} isError={false} />
+                    <DetailPane label="response" content={entry.responseBody} isError={!!entry.error} />
+                    <DetailPane label="headers" content={entry.upstream.headers} isError={false} collapsed />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="px-3 py-2 bg-black/30 text-[8px] text-zinc-500 font-mono border-b border-white/5">
+                    <span className="text-zinc-300 font-bold">{entry.method}</span>
+                    {' '}{entry.url}
+                    {entry.status != null && (
+                      <span className={`ml-3 font-bold ${entry.status >= 400 ? 'text-orange-400' : 'text-green-400'}`}>
+                        {entry.status} {entry.statusText}
+                      </span>
+                    )}
+                    {entry.durationMs != null && <span className="ml-3 text-zinc-600">{entry.durationMs}ms</span>}
+                  </div>
+                  <div className="flex flex-col">
+                    <DetailPane label="request" content={entry.requestBody} isError={false} />
+                    <DetailPane label="response" content={entry.error ?? entry.responseBody} isError={!!entry.error} />
+                    <DetailPane label="headers" content={Object.keys(entry.responseHeaders).length > 0 ? entry.responseHeaders : null} isError={false} collapsed />
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -650,12 +671,10 @@ const NetworkTab = ({ log, onClear }: { log: RequestLogEntry[]; onClear: () => v
   );
 };
 
-const DetailPane = ({ label, entry }: { label: 'request' | 'response' | 'headers'; entry: RequestLogEntry }) => {
-  const [open, setOpen] = useLocalState(label !== 'headers');
-  const content = label === 'request' ? entry.requestBody
-    : label === 'headers' ? (Object.keys(entry.responseHeaders).length > 0 ? entry.responseHeaders : null)
-    : (entry.error ?? entry.responseBody);
+const DetailPane = ({ label, content, isError, collapsed }: { label: 'request' | 'response' | 'headers'; content: unknown; isError: boolean; collapsed?: boolean }) => {
+  const [open, setOpen] = useLocalState(!collapsed);
   const isEmpty = content == null;
+  const title = label === 'request' ? 'Request Body' : label === 'headers' ? 'Response Headers' : 'Response Body';
 
   return (
     <div className="border-t border-white/5 first:border-t-0">
@@ -663,7 +682,7 @@ const DetailPane = ({ label, entry }: { label: 'request' | 'response' | 'headers
         onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between px-3 py-2 text-[8px] uppercase font-bold tracking-wider text-zinc-500 hover:text-zinc-300 transition-colors bg-black/20"
       >
-        {label === 'request' ? 'Request Body' : label === 'headers' ? 'Response Headers' : 'Response Body'}
+        {title}
         <ChevronDown size={10} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
@@ -671,7 +690,7 @@ const DetailPane = ({ label, entry }: { label: 'request' | 'response' | 'headers
           {isEmpty ? (
             <span className="text-zinc-700 text-[8px]">—</span>
           ) : (
-            <pre className={`text-[8px] leading-relaxed whitespace-pre-wrap break-all ${label === 'response' && entry.error ? 'text-red-400' : 'text-green-400/80'}`}>
+            <pre className={`text-[8px] leading-relaxed whitespace-pre-wrap break-all ${isError ? 'text-red-400' : label === 'headers' ? 'text-zinc-400' : 'text-green-400/80'}`}>
               {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
             </pre>
           )}
