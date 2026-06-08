@@ -1,15 +1,41 @@
 import { useState } from 'react';
 import { useConfig, DYConfig, DynamicBoostingFactor } from '../context/ConfigContext';
-import { X, Terminal, Save, Database, RefreshCw, Globe, Cpu, Search, Layout, Codepen, Copy, Check, ImagePlus, ChevronDown, Plus, Trash2 } from 'lucide-react';
+import { useRequestLog } from '../context/RequestLogContext';
+import { X, Terminal, Save, Database, RefreshCw, Globe, Cpu, Search, Layout, Codepen, Copy, Check, ImagePlus, ChevronDown, Plus, Trash2, Key, Eye, EyeOff, RefreshCcw, Wifi } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
   const { config, setConfig, lastRequestPayload } = useConfig();
+  const { log: requestLog, loggedFetch, clearLog } = useRequestLog();
   const [localConfig, setLocalConfig] = useState<DYConfig>(config);
-  const [activeTab, setActiveTab] = useState<'config' | 'debug'>('config');
+  const [activeTab, setActiveTab] = useState<'config' | 'payload' | 'network'>('config');
   const [copied, setCopied] = useState(false);
   const [showDynamicBoosting, setShowDynamicBoosting] = useState(false);
   const [showAffinityBoosting, setShowAffinityBoosting] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [widgets, setWidgets] = useState<Array<{ id: number; name: string; strategy: string }>>([]);
+  const [fetchingWidgets, setFetchingWidgets] = useState(false);
+  const [widgetFetchError, setWidgetFetchError] = useState<string | null>(null);
+
+  const fetchWidgets = async () => {
+    if (!localConfig.sectionId || !localConfig.feedId) {
+      setWidgetFetchError('Section ID and Feed ID are required');
+      return;
+    }
+    setFetchingWidgets(true);
+    setWidgetFetchError(null);
+    try {
+      const res = await loggedFetch(`/api/dy-widgets?sectionId=${localConfig.sectionId}&feedId=${localConfig.feedId}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to fetch widgets');
+      setWidgets(data.widgets ?? []);
+      if ((data.widgets ?? []).length === 0) setWidgetFetchError('No widgets found for this section/feed');
+    } catch (e) {
+      setWidgetFetchError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setFetchingWidgets(false);
+    }
+  };
 
   const handleSave = () => {
     setConfig(localConfig);
@@ -120,10 +146,19 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                 Configuration
               </button>
               <button 
-                onClick={() => setActiveTab('debug')}
-                className={`text-[9px] uppercase tracking-wider font-bold transition-colors ${activeTab === 'debug' ? 'text-white border-b border-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+                onClick={() => setActiveTab('payload')}
+                className={`text-[9px] uppercase tracking-wider font-bold transition-colors ${activeTab === 'payload' ? 'text-white border-b border-white' : 'text-zinc-500 hover:text-zinc-300'}`}
               >
                 Request Inspector
+              </button>
+              <button
+                onClick={() => setActiveTab('network')}
+                className={`text-[9px] uppercase tracking-wider font-bold transition-colors flex items-center gap-1 ${activeTab === 'network' ? 'text-white border-b border-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                <Wifi size={9} /> Network
+                {requestLog.length > 0 && (
+                  <span className="ml-0.5 bg-zinc-700 text-zinc-300 rounded-full px-1.5 py-0.5 text-[7px]">{requestLog.length}</span>
+                )}
               </button>
             </div>
           </div>
@@ -134,15 +169,93 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
 
         {activeTab === 'config' ? (
           <div className="space-y-10 pb-20">
+            {/* Section: API Keys & Branding */}
+            <section>
+              <SectionHeader icon={<Key size={14}/>} title="API Keys & Branding" />
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between mb-1.5 px-0.5">
+                    <label className="text-zinc-400 font-bold uppercase tracking-tighter text-[9px]">Experience API Key</label>
+                    <span className="text-zinc-600 italic text-[8px]">Used for Visual Search &amp; Shopping Muse</span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showApiKey ? 'text' : 'password'}
+                      className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2.5 pr-10 rounded text-zinc-100 focus:border-green-500/50 focus:bg-zinc-800/50 outline-none transition-all placeholder:text-zinc-700"
+                      value={localConfig.experienceApiKey}
+                      placeholder="Paste key here..."
+                      onChange={e => updateField('experienceApiKey', e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(v => !v)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300 transition-colors"
+                      tabIndex={-1}
+                    >
+                      {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <ConfigField
+                    label="Logo URL"
+                    value={localConfig.logoUrl}
+                    onChange={(v: string) => updateField('logoUrl', v)}
+                    description="URL or data URI"
+                  />
+                  <label className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded border border-zinc-700 hover:border-zinc-500 text-zinc-300 cursor-pointer uppercase text-[9px] font-bold tracking-wider">
+                    <ImagePlus size={12} /> Upload Logo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleLogoUpload(e.target.files?.[0] ?? null)}
+                    />
+                  </label>
+                </div>
+              </div>
+            </section>
+
             {/* Section: Core API */}
             <section>
               <SectionHeader icon={<Database size={14}/>} title="Core API Resolution" />
               <div className="grid grid-cols-2 gap-4">
                 <ConfigField label="Section ID" value={localConfig.sectionId} onChange={(v: string) => updateField('sectionId', v)} />
-                <ConfigField label="Feed ID" value={localConfig.feedId} onChange={(v: string) => updateField('feedId', v)} />
-                <ConfigField label="Widget ID" value={localConfig.widgetId} onChange={(v: string) => updateField('widgetId', v)} />
-                <div className="col-span-2 mt-4">
-                  <Toggle label="Use EU Endpoint" checked={localConfig.region === 'EU'} onChange={(v: boolean) => updateField('region', v ? 'EU' : 'US')} />
+                <ConfigField label="Feed ID" value={localConfig.feedId} onChange={(v: string) => updateField('feedId', v)} />                <div className="col-span-2">
+                  <div className="flex justify-between mb-1.5 px-0.5">
+                    <label className="text-zinc-400 font-bold uppercase tracking-tighter text-[9px]">Widget ID</label>
+                    <button
+                      type="button"
+                      onClick={fetchWidgets}
+                      disabled={fetchingWidgets}
+                      className="flex items-center gap-1 text-[8px] uppercase font-bold tracking-wider text-zinc-500 hover:text-green-400 disabled:opacity-40 transition-colors"
+                    >
+                      <RefreshCcw size={10} className={fetchingWidgets ? 'animate-spin' : ''} />
+                      {fetchingWidgets ? 'Fetching…' : 'Fetch from API'}
+                    </button>
+                  </div>
+                  {widgets.length > 0 ? (
+                    <select
+                      value={localConfig.widgetId}
+                      onChange={e => updateField('widgetId', e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2.5 rounded text-zinc-100 focus:border-green-500/50 outline-none transition-all text-[11px]"
+                    >
+                      <option value="">— select a widget —</option>
+                      {widgets.map(w => {
+                        let strategyKey = w.name;
+                        try { strategyKey = JSON.parse(w.strategy)?.key ?? w.name; } catch {}
+                        return <option key={w.id} value={String(w.id)}>{w.name} ({strategyKey})</option>;
+                      })}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2.5 rounded text-zinc-100 focus:border-green-500/50 focus:bg-zinc-800/50 outline-none transition-all placeholder:text-zinc-700"
+                      value={localConfig.widgetId}
+                      onChange={e => updateField('widgetId', e.target.value)}
+                    />
+                  )}
+                  {widgetFetchError && <p className="mt-1 text-[9px] text-red-400">{widgetFetchError}</p>}
                 </div>
               </div>
             </section>
@@ -211,23 +324,6 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                     onChange={(v: string) => updateField('categoryPath', v)}
                     description="Format: Sinsay / Women / Search"
                   />
-                </div>
-                <div className="col-span-2">
-                  <ConfigField
-                    label="Logo URL"
-                    value={localConfig.logoUrl}
-                    onChange={(v: string) => updateField('logoUrl', v)}
-                    description="URL or data URI"
-                  />
-                  <label className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded border border-zinc-700 hover:border-zinc-500 text-zinc-300 cursor-pointer uppercase text-[9px] font-bold tracking-wider">
-                    <ImagePlus size={12} /> Upload Logo
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleLogoUpload(e.target.files?.[0] ?? null)}
-                    />
-                  </label>
                 </div>
               </div>
             </section>
@@ -398,7 +494,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
               </button>
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'payload' ? (
           <div className="pb-20">
             <div className="flex justify-between items-center mb-4">
               <SectionHeader icon={<Codepen size={14}/>} title="Final Request Payload" />
@@ -423,6 +519,8 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
               </pre>
             </div>
           </div>
+        ) : (
+          <NetworkTab log={requestLog} onClear={clearLog} />
         )}
       </motion.div>
     </div>
@@ -462,3 +560,94 @@ const Toggle = ({ label, checked, onChange }: any) => (
     <span className="text-zinc-500 group-hover:text-zinc-300 transition-colors uppercase text-[9px] font-bold">{label}</span>
   </label>
 );
+
+import { useState as useLocalState } from 'react';
+import { RequestLogEntry } from '../context/RequestLogContext';
+
+const NetworkTab = ({ log, onClear }: { log: RequestLogEntry[]; onClear: () => void }) => {
+  const [selected, setSelected] = useLocalState<string | null>(log[0]?.id ?? null);
+  const entry = log.find(e => e.id === selected) ?? log[0] ?? null;
+
+  return (
+    <div className="pb-20 flex flex-col gap-4">
+      <div className="flex justify-between items-center">
+        <SectionHeader icon={<Wifi size={14}/>} title="Network Log" />
+        {log.length > 0 && (
+          <button
+            onClick={onClear}
+            className="text-[8px] uppercase font-bold tracking-wider text-zinc-600 hover:text-red-400 transition-colors"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {log.length === 0 ? (
+        <p className="text-zinc-600 text-[9px]">No requests yet. Perform a search to see traffic.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {/* Request list */}
+          <div className="space-y-1 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+            {log.map(e => (
+              <button
+                key={e.id}
+                onClick={() => setSelected(e.id)}
+                className={`w-full text-left px-3 py-2 rounded flex items-center gap-3 transition-colors ${selected === e.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
+              >
+                <span className={`text-[8px] font-bold uppercase w-6 shrink-0 ${e.error ? 'text-red-400' : e.status && e.status >= 400 ? 'text-orange-400' : 'text-green-400'}`}>
+                  {e.status ?? '…'}
+                </span>
+                <span className="text-[8px] font-bold text-zinc-400 w-8 shrink-0">{e.method}</span>
+                <span className="text-[8px] text-zinc-300 truncate flex-1">{e.url}</span>
+                {e.durationMs != null && (
+                  <span className="text-[8px] text-zinc-600 shrink-0">{e.durationMs}ms</span>
+                )}
+                <span className="text-[7px] text-zinc-600 shrink-0">{e.timestamp.toLocaleTimeString()}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Detail pane */}
+          {entry && (
+            <div className="border border-white/5 rounded-lg overflow-hidden">
+              <div className="flex gap-0 border-b border-white/5">
+                {(['request', 'response'] as const).map(pane => (
+                  <DetailPane key={pane} label={pane} entry={entry} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const DetailPane = ({ label, entry }: { label: 'request' | 'response'; entry: RequestLogEntry }) => {
+  const [open, setOpen] = useLocalState(true);
+  const content = label === 'request' ? entry.requestBody : (entry.error ?? entry.responseBody);
+  const isEmpty = content == null;
+
+  return (
+    <div className="flex-1 min-w-0">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-3 py-2 text-[8px] uppercase font-bold tracking-wider text-zinc-500 hover:text-zinc-300 transition-colors bg-black/20"
+      >
+        {label === 'request' ? 'Request Body' : 'Response Body'}
+        <ChevronDown size={10} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="p-3 overflow-x-auto max-h-64 custom-scrollbar">
+          {isEmpty ? (
+            <span className="text-zinc-700 text-[8px]">—</span>
+          ) : (
+            <pre className={`text-[8px] leading-relaxed whitespace-pre-wrap break-all ${label === 'response' && entry.error ? 'text-red-400' : 'text-green-400/80'}`}>
+              {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
+            </pre>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};

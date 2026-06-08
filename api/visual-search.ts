@@ -10,14 +10,14 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { imageBase64, imageUrl } = req.body;
+  const { imageBase64, imageUrl, apiKey: clientApiKey } = req.body;
 
   // Validate input
   if ((!imageBase64 || typeof imageBase64 !== 'string') && (!imageUrl || typeof imageUrl !== 'string')) {
     return res.status(400).json({ error: 'imageBase64 or imageUrl is required and must be a string' });
   }
 
-  const apiKey = process.env.VISUALSEARCH_API_KEY;
+  const apiKey = clientApiKey || process.env.VISUALSEARCH_API_KEY;
   if (!apiKey) {
     console.error('[Visual Search] API key not configured');
     return res.status(500).json({ error: 'Visual Search API key not configured' });

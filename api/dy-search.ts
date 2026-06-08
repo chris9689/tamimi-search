@@ -14,15 +14,18 @@ export default async function handler(req: any, res: any) {
   try {
     const response = await fetch(`${baseUrl}${dySectionId}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dyPayload),
     });
 
-    const data = await response.json();
+    const text = await response.text();
+    let data: any;
+    try { data = JSON.parse(text); } catch { data = { error: text }; }
+
     res.status(response.status).json(data);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    const message = error instanceof Error ? error.message : String(error);
+    const cause = (error as any)?.cause?.code ?? (error as any)?.cause?.message ?? '';
+    res.status(500).json({ error: 'Proxy error', message, ...(cause ? { cause } : {}) });
   }
 }

@@ -1,0 +1,96 @@
+import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
+
+export interface RequestLogEntry {
+  id: string;
+  timestamp: Date;
+  method: string;
+  url: string;
+  requestBody: unknown;
+  status: number | null;
+  statusText: string;
+  responseBody: unknown;
+  error: string | null;
+  durationMs: number | null;
+}
+
+interface RequestLogContextValue {
+  log: RequestLogEntry[];
+  loggedFetch: (url: string, init?: RequestInit) => Promise<Response>;
+  clearLog: () => void;
+}
+
+const RequestLogContext = createContext<RequestLogContextValue | null>(null);
+
+let idCounter = 0;
+
+export const RequestLogProvider = ({ children }: { children: React.ReactNode }) => {
+  const [log, setLog] = useState<RequestLogEntry[]>([]);
+  const logRef = useRef(log);
+  logRef.current = log;
+
+  const loggedFetch = useCallback(async (url: string, init?: RequestInit): Promise<Response> => {
+    const id = String(++idCounter);
+    const method = (init?.method ?? 'GET').toUpperCase();
+    let requestBody: unknown = undefined;
+    try {
+      requestBody = init?.body ? JSON.parse(init.body as string) : undefined;
+    } catch {
+      requestBody = init?.body;
+    }
+
+    const entry: RequestLogEntry = {
+      id,
+      timestamp: new Date(),
+      method,
+      url,
+      requestBody,
+      status: null,
+      statusText: '',
+      responseBody: null,
+      error: null,
+      durationMs: null,
+    };
+
+    setLog(prev => [entry, ...prev].slice(0, 50));
+
+    const start = performance.now();
+    try {
+      const response = await fetch(url, init);
+      const durationMs = Math.round(performance.now() - start);
+
+      // Clone to read body without consuming the original
+      let responseBody: unknown = null;
+      try {
+        responseBody = await response.clone().json();
+      } catch {
+        try { responseBody = await response.clone().text(); } catch {}
+      }
+
+      setLog(prev => prev.map(e => e.id === id
+        ? { ...e, status: response.status, statusText: response.statusText, responseBody, durationMs }
+        : e
+      ));
+
+      return response;
+    } catch (err) {
+      const durationMs = Math.round(performance.now() - start);
+      const error = err instanceof Error ? err.message : String(err);
+      setLog(prev => prev.map(e => e.id === id ? { ...e, error, durationMs } : e));
+      throw err;
+    }
+  }, []);
+
+  const clearLog = useCallback(() => setLog([]), []);
+
+  return (
+    <RequestLogContext.Provider value={{ log, loggedFetch, clearLog }}>
+      {children}
+    </RequestLogContext.Provider>
+  );
+};
+
+export const useRequestLog = () => {
+  const ctx = useContext(RequestLogContext);
+  if (!ctx) throw new Error('useRequestLog must be used within a RequestLogProvider');
+  return ctx;
+};

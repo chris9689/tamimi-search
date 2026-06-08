@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useConfig } from '../context/ConfigContext';
+import { useRequestLog } from '../context/RequestLogContext';
 
 export interface DYSearchResponse {
   totalNumResults: number;
@@ -22,9 +23,10 @@ export interface DYSearchResponse {
 
 export const useDYSearch = (query: string, offset: number, filters: any[] = []) => {
   const { config, setLastRequestPayload } = useConfig();
+  const { loggedFetch } = useRequestLog();
 
   return useQuery({
-    queryKey: ['dySearch', query, offset, filters, config.sectionId, config.feedId, config.region, config],
+    queryKey: ['dySearch', query, offset, filters, config.sectionId, config.feedId, config],
     queryFn: async (): Promise<DYSearchResponse> => {
       // If we don't have IDs, return early (though Query will be disabled)
       if (!config.sectionId || !config.feedId) {
@@ -32,6 +34,9 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
       }
 
       const fId = isNaN(Number(config.feedId)) ? config.feedId : Number(config.feedId);
+
+      const isEu = config.sectionId?.startsWith('98');
+      const region = isEu ? 'EU' : 'US';
 
       const clampWeight = (value: number) => Math.max(-100, Math.min(100, value));
 
@@ -104,8 +109,8 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
         text_knn_threshold: config.textKnnThreshold,
         k: config.k,
         num_candidates: config.numCandidates,
-        priorityFactors,
-        affinityProfile,
+        ...(priorityFactors.length > 0 ? { priorityFactors } : {}),
+        ...(Object.keys(affinityProfile).length > 0 ? { affinityProfile } : {}),
       };
 
       // Conditionally add optional parameters
@@ -126,12 +131,12 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
         data: [
           {
             fId: fId,
-            wId: config.widgetId ? String(config.widgetId) : null,
+            ...(config.widgetId ? { wId: String(config.widgetId) } : {}),
             maxProducts: config.maxProducts,
             rules: [],
             filtering: [],
             strategy: config.strategy,
-            searchFilters: [],
+            searchFilters: filters,
             search: searchObj,
           },
         ],
@@ -143,7 +148,7 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
           geoCode: config.geoCode,
           geoRegionCode: config.geoRegionCode
         },
-        uid: config.uid || undefined
+        ...(config.uid ? { uid: config.uid } : {}),
       };
 
       // Create clean payload for display (without region/sectionId) 
@@ -151,12 +156,12 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
 
       // Include region and sectionId for the proxy endpoint to route correctly
       const requestPayload = {
-        region: config.region,
+        region,
         sectionId: config.sectionId,
         ...payload
       };
 
-      const response = await fetch('/api/dy-search', {
+      const response = await loggedFetch('/api/dy-search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

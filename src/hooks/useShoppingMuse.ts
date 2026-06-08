@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useConfig } from '../context/ConfigContext';
+import { useRequestLog } from '../context/RequestLogContext';
 
 export interface ShoppingMuseWidgetSlot {
   slotId?: string;
@@ -28,12 +29,13 @@ interface ShoppingMuseRequest {
 
 export function useShoppingMuse() {
   const { config } = useConfig();
+  const { loggedFetch } = useRequestLog();
 
   return useMutation({
     mutationFn: async ({ text, chatId }: ShoppingMuseRequest): Promise<ShoppingMuseResponse> => {
       const locale = config.useLocale && config.locale ? config.locale : config.language;
 
-      const response = await fetch('/api/shopping-muse', {
+      const response = await loggedFetch('/api/shopping-muse', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -44,7 +46,7 @@ export function useShoppingMuse() {
           locale,
           pageLocation: typeof window !== 'undefined' ? window.location.href : undefined,
           userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
-        }),
+          ...(config.experienceApiKey ? { apiKey: config.experienceApiKey } : {}),        }),
       });
 
       if (!response.ok) {

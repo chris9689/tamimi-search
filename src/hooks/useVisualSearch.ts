@@ -1,4 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
+import { useConfig } from '../context/ConfigContext';
+import { useRequestLog } from '../context/RequestLogContext';
 
 export interface VisualSearchInput {
   imageBase64?: string;
@@ -13,6 +15,9 @@ export interface VisualSearchResult {
 }
 
 export function useVisualSearch(input: VisualSearchInput | null) {
+  const { config } = useConfig();
+  const { loggedFetch } = useRequestLog();
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['visualSearch', input?.imageUrl ?? input?.imageBase64 ?? ''],
     queryFn: async () => {
@@ -20,12 +25,13 @@ export function useVisualSearch(input: VisualSearchInput | null) {
         throw new Error('No image provided');
       }
 
-      const response = await fetch('/api/visual-search', {
+      const response = await loggedFetch('/api/visual-search', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(input),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...input,
+          ...(config.experienceApiKey ? { apiKey: config.experienceApiKey } : {}),
+        }),
       });
 
       if (!response.ok) {

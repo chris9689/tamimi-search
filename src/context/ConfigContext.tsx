@@ -13,7 +13,7 @@ export interface DYConfig {
   sectionId: string;
   feedId: string;
   widgetId: string;
-  region: 'US' | 'EU';
+  experienceApiKey: string;
   language: string;
   ctxType: string;
   itemsPerPage: number;
@@ -56,10 +56,10 @@ export interface DYConfig {
 }
 
 const defaultConfig: DYConfig = {
-  sectionId: '8787656',
-  feedId: '85470',
-  widgetId: '464618',
-  region: 'US',
+  sectionId: '8768867',
+  feedId: '',
+  widgetId: '',
+  experienceApiKey: 'c14bda8218846291c49041eb6c6f7efd450c5038fddafc360f85702770a19fc6',
   language: 'en_US',
   ctxType: 'HOMEPAGE',
   itemsPerPage: 12,
@@ -121,12 +121,18 @@ export const ConfigProvider = ({ children }: { children: React.ReactNode }) => {
     const saved = localStorage.getItem('dy_sinsay_config');
     try {
       const parsed = saved ? JSON.parse(saved) : defaultConfig;
-      // Remove deprecated endpoint and ensure region
-      const { endpoint, ...cleanConfig } = parsed;
+      // Strip deprecated/removed fields
+      const { endpoint, region, visualSearchApiKey, shoppingMuseApiKey, geminiApiKey, ...cleanConfig } = parsed;
+      // Only carry over keys that exist in the current DYConfig interface
+      const validKeys = Object.keys(defaultConfig) as (keyof DYConfig)[];
+      const filtered = Object.fromEntries(
+        validKeys
+          .filter(k => k in cleanConfig && cleanConfig[k] !== undefined)
+          .map(k => [k, cleanConfig[k]])
+      );
       return {
         ...defaultConfig,
-        ...cleanConfig,
-        region: cleanConfig.region || 'US',
+        ...filtered,
         mapping: {
           ...defaultConfig.mapping,
           ...(cleanConfig.mapping || {}),

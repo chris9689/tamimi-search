@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, SlidersHorizontal, ChevronDown, Heart, ShoppingBag, User, X, Camera, MessageCircle } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronDown, Heart, ShoppingBag, User, X, Camera, MessageCircle, Settings } from 'lucide-react';
 import { useDYSearch } from './hooks/useDYSearch';
 import { useConfig } from './context/ConfigContext';
 import { extractDyPayload } from './utils/dyResponseAdapter';
@@ -41,17 +41,6 @@ export default function App() {
     setSearchTerm(e.target.value);
     updateSearch(e.target.value);
   };
-
-  // Keyboard shortcut: CMD/CTRL + SHIFT + K
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'K') {
-        setShowConfig(prev => !prev);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   useEffect(() => {
     setLogoError(false);
@@ -374,17 +363,6 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Shortcut Hint Overlay */}
-      <div className="fixed bottom-4 left-4 bg-black/80 text-[10px] text-white/60 px-4 py-2 rounded-full backdrop-blur-md flex items-center gap-3 pointer-events-none z-40 select-none border border-white/5">
-        <div className="flex gap-1">
-          <span className="bg-white/20 px-1.5 py-0.5 rounded text-white font-bold">CTRL</span>
-          <span className="bg-white/20 px-1.5 py-0.5 rounded text-white font-bold">SHIFT</span>
-          <span className="text-white/40">+</span>
-          <span className="bg-white/20 px-1.5 py-0.5 rounded text-white font-bold">K</span>
-        </div>
-        <span className="opacity-80">to configure Dynamic Yield API</span>
-      </div>
-
       {/* Visual Search Overlay */}
       <AnimatePresence>
         {showVisualSearch && (
@@ -401,6 +379,16 @@ export default function App() {
           <MuseChatOverlay onClose={() => setShowMuseChat(false)} />
         )}
       </AnimatePresence>
+
+      {/* Settings FAB */}
+      <button
+        onClick={() => setShowConfig(true)}
+        className="fixed bottom-6 right-6 z-50 w-12 h-12 bg-black text-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-800 active:scale-95 transition-all"
+        aria-label="Open settings"
+        title="Configure Dynamic Yield API"
+      >
+        <Settings size={20} />
+      </button>
     </div>
   );
 }
