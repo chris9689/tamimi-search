@@ -29,7 +29,9 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
     setFetchingWidgets(true);
     setWidgetFetchError(null);
     try {
-      const res = await loggedFetch(`/api/dy-widgets?sectionId=${localConfig.sectionId}&feedId=${localConfig.feedId}`);
+      const res = await loggedFetch(
+        `https://recs-worker.use1.dynamicyield.com/api/v1/section/${localConfig.sectionId}/feed/${localConfig.feedId}/widgets`
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fetch widgets');
       setWidgets(data.widgets ?? []);
@@ -269,6 +271,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                     />
                   )}
                   {widgetFetchError && <p className="mt-1 text-[9px] text-red-400">{widgetFetchError}</p>}
+                  <p className="mt-1.5 text-[8px] text-zinc-600 italic">Optional — leave blank to use request parameters directly. Widgets pre-configure strategy, filters &amp; ranking.</p>
                 </div>
               </div>
             </section>
