@@ -30,6 +30,7 @@ export function useVisualSearch(input: VisualSearchInput | null) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...input,
+          sectionId: config.sectionId,
           ...(config.experienceApiKey ? { apiKey: config.experienceApiKey } : {}),
         }),
       });

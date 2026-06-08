@@ -10,7 +10,7 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { imageBase64, imageUrl, apiKey: clientApiKey } = req.body;
+  const { imageBase64, imageUrl, apiKey: clientApiKey, sectionId } = req.body;
 
   // Validate input
   if ((!imageBase64 || typeof imageBase64 !== 'string') && (!imageUrl || typeof imageUrl !== 'string')) {
@@ -22,6 +22,9 @@ export default async function handler(req: any, res: any) {
     console.error('[Visual Search] API key not configured');
     return res.status(500).json({ error: 'Visual Search API key not configured' });
   }
+
+  const isEu = typeof sectionId === 'string' && sectionId.startsWith('98');
+  const dyApiBase = isEu ? 'https://dy-api.eu' : 'https://dy-api.com';
 
   try {
     const resolvedBase64 = imageBase64 ?? await fetchImageUrlAsBase64(imageUrl);
@@ -53,7 +56,7 @@ export default async function handler(req: any, res: any) {
       },
     };
 
-    const upstreamUrl = 'https://dy-api.com/v2/serve/user/search';
+    const upstreamUrl = `${dyApiBase}/v2/serve/user/search`;
     const response = await fetch(upstreamUrl, {
       method: 'POST',
       headers: {

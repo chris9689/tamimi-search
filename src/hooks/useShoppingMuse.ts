@@ -44,6 +44,7 @@ export function useShoppingMuse() {
           text,
           chatId,
           locale,
+          sectionId: config.sectionId,
           pageLocation: typeof window !== 'undefined' ? window.location.href : undefined,
           userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
           ...(config.experienceApiKey ? { apiKey: config.experienceApiKey } : {}),        }),

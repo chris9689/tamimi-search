@@ -66,6 +66,10 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ error: 'Shopping Muse API key not configured' });
   }
 
+  const sectionId = typeof (body as any).sectionId === 'string' ? (body as any).sectionId : '';
+  const isEu = sectionId.startsWith('98');
+  const dyApiBase = isEu ? 'https://dy-api.eu' : 'https://dy-api.com';
+
   // Dummy values requested for Muse identity/session fields.
   const dummyDyid = '123';
   const dummySessionDy = 'ohyr6v42l9zd4bpinnvp7urjjx9lrssw';
@@ -106,7 +110,7 @@ export default async function handler(req: any, res: any) {
   };
 
   try {
-    const upstreamUrl = 'https://dy-api.com/v2/serve/user/agent-assistant';
+    const upstreamUrl = `${dyApiBase}/v2/serve/user/agent-assistant`;
     const response = await fetch(upstreamUrl, {
       method: 'POST',
       headers: {
