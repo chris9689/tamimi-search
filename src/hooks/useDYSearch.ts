@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useConfig } from '../context/ConfigContext';
 import { useRequestLog } from '../context/RequestLogContext';
+import { usePersona } from '../context/PersonaContext';
 
 export interface DYSearchResponse {
   totalNumResults: number;
@@ -24,9 +25,10 @@ export interface DYSearchResponse {
 export const useDYSearch = (query: string, offset: number, filters: any[] = []) => {
   const { config, setLastRequestPayload } = useConfig();
   const { loggedFetch } = useRequestLog();
+  const { activePersona } = usePersona();
 
   return useQuery({
-    queryKey: ['dySearch', query, offset, filters, config.sectionId, config.feedId, config],
+    queryKey: ['dySearch', query, offset, filters, config.sectionId, config.feedId, config, activePersona?.id],
     queryFn: async (): Promise<DYSearchResponse> => {
       // If we don't have IDs, return early (though Query will be disabled)
       if (!config.sectionId || !config.feedId) {
@@ -70,7 +72,7 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
             }))
         : [];
 
-      const affinityPriorityFactors = config.useAffinityBoosting
+      const affinityPriorityFactors = (activePersona || config.useAffinityBoosting)
         ? [
             {
               name: 'USER_AFFINITIES_V2',
@@ -80,7 +82,18 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
         : [];
 
       let affinityProfile: Record<string, unknown> = {};
-      if (config.useAffinityBoosting && config.affinityProfileJson.trim()) {
+
+      // Active persona overrides config affinity profile
+      if (activePersona) {
+        try {
+          const parsed = JSON.parse(activePersona.affinityProfileJson);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            affinityProfile = parsed;
+          }
+        } catch {
+          console.warn('Invalid persona affinity profile JSON.');
+        }
+      } else if (config.useAffinityBoosting && config.affinityProfileJson.trim()) {
         try {
           const parsed = JSON.parse(config.affinityProfileJson);
           if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {

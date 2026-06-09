@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, SlidersHorizontal, ChevronDown, Heart, ShoppingBag, User, X, Camera, MessageCircle, Settings } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronDown, Heart, ShoppingBag, User, X, Camera, MessageCircle } from 'lucide-react';
 import { useDYSearch } from './hooks/useDYSearch';
 import { useConfig } from './context/ConfigContext';
 import { extractDyPayload } from './utils/dyResponseAdapter';
@@ -7,6 +7,7 @@ import { ProductCard } from './components/ProductCard';
 import { ConfigPanel } from './components/ConfigPanel';
 import { VisualSearchOverlay } from './components/VisualSearchOverlay';
 import { MuseChatOverlay } from './components/MuseChatOverlay';
+import { PersonaSwitcher } from './components/PersonaSwitcher';
 import { motion, AnimatePresence } from 'framer-motion';
 import debounce from 'lodash/debounce';
 
@@ -395,15 +396,8 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Settings FAB */}
-      <button
-        onClick={() => setShowConfig(true)}
-        className="fixed bottom-6 right-6 z-50 w-12 h-12 bg-black text-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-800 active:scale-95 transition-all"
-        aria-label="Open settings"
-        title="Configure Dynamic Yield API"
-      >
-        <Settings size={20} />
-      </button>
+      {/* Settings FAB + Persona Switcher */}
+      <PersonaSwitcher onOpenSettings={() => setShowConfig(true)} />
     </div>
   );
 }

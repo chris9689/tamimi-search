@@ -5,6 +5,7 @@ import App from './App';
 import './index.css';
 import { ConfigProvider } from './context/ConfigContext';
 import { RequestLogProvider } from './context/RequestLogContext';
+import { PersonaProvider } from './context/PersonaContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,7 +21,9 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <ConfigProvider>
         <RequestLogProvider>
-          <App />
+          <PersonaProvider>
+            <App />
+          </PersonaProvider>
         </RequestLogProvider>
       </ConfigProvider>
     </QueryClientProvider>
