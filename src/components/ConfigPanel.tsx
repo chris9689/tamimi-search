@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useState as useLocalState } from 'react';
 import { useConfig, DYConfig, DynamicBoostingFactor } from '../context/ConfigContext';
-import { useRequestLog } from '../context/RequestLogContext';
-import { X, Terminal, Save, Database, RefreshCw, Globe, Cpu, Search, Layout, Codepen, Copy, Check, ImagePlus, ChevronDown, Plus, Trash2, Key, Eye, EyeOff, RefreshCcw, Wifi } from 'lucide-react';
+import { useRequestLog, RequestLogEntry } from '../context/RequestLogContext';
+import { X, Terminal, Settings, Save, Database, RefreshCw, Globe, Cpu, Search, Layout, Codepen, Copy, Check, ImagePlus, ChevronDown, Plus, Trash2, Key, Eye, EyeOff, RefreshCcw, Wifi } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+const inputClassName = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder:text-gray-400';
+const codeBlockClassName = 'rounded-xl border border-gray-800 bg-gray-900 text-gray-100';
 
 export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
   const { config, setConfig, lastRequestPayload } = useConfig();
@@ -122,412 +125,460 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
     reader.readAsDataURL(file);
   };
 
+  const tabClassName = (tab: 'config' | 'payload' | 'network') =>
+    `inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors ${
+      activeTab === tab
+        ? 'bg-indigo-50 text-indigo-700 shadow-sm'
+        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+    }`;
+
   return (
     <div className="fixed inset-0 z-100 flex justify-end">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
-        onClick={onClose} 
+        className="absolute inset-0 bg-black/60"
+        onClick={onClose}
       />
-      
-      <motion.div 
+
+      <motion.div
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="relative w-full max-w-xl bg-[#0f0f0f] border-l border-white/10 text-gray-300 h-full p-8 font-mono text-[10px] overflow-y-auto custom-scrollbar"
+        className="relative flex h-full w-full max-w-lg flex-col overflow-hidden border-l border-gray-200 bg-[#f8f8f8] text-gray-900 shadow-2xl"
       >
-        <div className="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
-          <div className="flex flex-col">
-            <h2 className="text-green-500 text-base flex items-center gap-2 font-bold tracking-tight">
-              <Terminal size={20}/> DY_PREVIEW_DEBUG_v3
-            </h2>
-            <div className="flex gap-4 mt-2">
-              <button 
-                onClick={() => setActiveTab('config')}
-                className={`text-[9px] uppercase tracking-wider font-bold transition-colors ${activeTab === 'config' ? 'text-white border-b border-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-              >
-                Configuration
-              </button>
-              <button 
-                onClick={() => setActiveTab('payload')}
-                className={`text-[9px] uppercase tracking-wider font-bold transition-colors ${activeTab === 'payload' ? 'text-white border-b border-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-              >
-                Request Inspector
-              </button>
-              <button
-                onClick={() => setActiveTab('network')}
-                className={`text-[9px] uppercase tracking-wider font-bold transition-colors flex items-center gap-1 ${activeTab === 'network' ? 'text-white border-b border-white' : 'text-zinc-500 hover:text-zinc-300'}`}
-              >
-                <Wifi size={9} /> Network
-                {requestLog.length > 0 && (
-                  <span className="ml-0.5 bg-zinc-700 text-zinc-300 rounded-full px-1.5 py-0.5 text-[7px]">{requestLog.length}</span>
-                )}
-              </button>
+        <div className="border-b border-gray-200 bg-white px-6 py-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                  <Settings size={20} />
+                </div>
+                <div>
+                  <span className="hidden" aria-hidden="true">
+                    <Terminal size={0} />
+                  </span>
+                  <h2 className="text-lg font-semibold text-gray-900">DY Search Settings</h2>
+                  <p className="mt-0.5 text-sm text-gray-500">Configure search, inspect payloads, and review network traffic.</p>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                <button type="button" onClick={() => setActiveTab('config')} className={tabClassName('config')}>
+                  Configuration
+                </button>
+                <button type="button" onClick={() => setActiveTab('payload')} className={tabClassName('payload')}>
+                  Request Inspector
+                </button>
+                <button type="button" onClick={() => setActiveTab('network')} className={tabClassName('network')}>
+                  <Wifi size={14} />
+                  Network
+                  {requestLog.length > 0 && (
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">
+                      {requestLog.length}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700"
+            >
+              <X size={20} />
+            </button>
           </div>
-          <button onClick={onClose} className="hover:text-white transition-colors p-2 hover:bg-white/5 rounded">
-            <X size={24} />
-          </button>
         </div>
 
-        {activeTab === 'config' ? (
-          <div className="space-y-10 pb-20">
-            {/* Section: API Keys & Branding */}
-            <section>
-              <SectionHeader icon={<Key size={14}/>} title="API Keys & Branding" />
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between mb-1.5 px-0.5">
-                    <label className="text-zinc-400 font-bold uppercase tracking-tighter text-[9px]">Experience API Key</label>
-                    <span className="text-zinc-600 italic text-[8px]">Used for Visual Search &amp; Shopping Muse</span>
+        <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
+          {activeTab === 'config' ? (
+            <div className="space-y-8 pb-6">
+              <section>
+                <SectionHeader icon={<Key size={14} />} title="API Keys & Branding" />
+                <div className="space-y-4">
+                  <div>
+                    <div className="mb-1.5 flex items-center justify-between gap-3">
+                      <label className="text-[11px] font-medium text-gray-700">Experience API Key</label>
+                      <span className="text-[11px] text-gray-500">Used for Visual Search &amp; Shopping Muse</span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showApiKey ? 'text' : 'password'}
+                        className={`${inputClassName} pr-10`}
+                        value={localConfig.experienceApiKey}
+                        placeholder="Enter Experience API Key..."
+                        onChange={e => updateField('experienceApiKey', e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowApiKey(v => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-700"
+                        tabIndex={-1}
+                      >
+                        {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
-                  <div className="relative">
-                    <input
-                      type={showApiKey ? 'text' : 'password'}
-                      className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2.5 pr-10 rounded text-zinc-100 focus:border-green-500/50 focus:bg-zinc-800/50 outline-none transition-all placeholder:text-zinc-700"
-                      value={localConfig.experienceApiKey}
-                      placeholder="Enter Experience API Key..."
-                      onChange={e => updateField('experienceApiKey', e.target.value)}
+
+                  <div>
+                    <ConfigField
+                      label="Logo URL"
+                      value={localConfig.logoUrl}
+                      onChange={(v: string) => updateField('logoUrl', v)}
+                      description="URL or data URI"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowApiKey(v => !v)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300 transition-colors"
-                      tabIndex={-1}
-                    >
-                      {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
+                    <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50">
+                      <ImagePlus size={14} className="text-indigo-600" />
+                      Upload Logo
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleLogoUpload(e.target.files?.[0] ?? null)}
+                      />
+                    </label>
                   </div>
                 </div>
-                <div>
+              </section>
+
+              <section>
+                <SectionHeader icon={<Database size={14} />} title="Core API Resolution" />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <ConfigField label="Section ID" value={localConfig.sectionId} onChange={(v: string) => updateField('sectionId', v)} />
                   <ConfigField
-                    label="Logo URL"
-                    value={localConfig.logoUrl}
-                    onChange={(v: string) => updateField('logoUrl', v)}
-                    description="URL or data URI"
+                    label="Feed ID"
+                    value={localConfig.feedId}
+                    onChange={(v: string) => updateField('feedId', v)}
+                    description="Required — find in DY UI → Assets → Feeds"
                   />
-                  <label className="mt-2 inline-flex items-center gap-2 px-3 py-2 rounded border border-zinc-700 hover:border-zinc-500 text-zinc-300 cursor-pointer uppercase text-[9px] font-bold tracking-wider">
-                    <ImagePlus size={12} /> Upload Logo
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleLogoUpload(e.target.files?.[0] ?? null)}
-                    />
-                  </label>
-                </div>
-              </div>
-            </section>
 
-            {/* Section: Core API */}
-            <section>
-              <SectionHeader icon={<Database size={14}/>} title="Core API Resolution" />
-              <div className="grid grid-cols-2 gap-4">
-                <ConfigField label="Section ID" value={localConfig.sectionId} onChange={(v: string) => updateField('sectionId', v)} />
-                <ConfigField label="Feed ID" value={localConfig.feedId} onChange={(v: string) => updateField('feedId', v)} description="Required — find in DY UI → Assets → Feeds" /><div className="col-span-2">
-                  <div className="flex justify-between mb-1.5 px-0.5">
-                    <label className="text-zinc-400 font-bold uppercase tracking-tighter text-[9px]">Widget ID</label>
-                    <button
-                      type="button"
-                      onClick={fetchWidgets}
-                      disabled={fetchingWidgets}
-                      className="flex items-center gap-1 text-[8px] uppercase font-bold tracking-wider text-zinc-500 hover:text-green-400 disabled:opacity-40 transition-colors"
-                    >
-                      <RefreshCcw size={10} className={fetchingWidgets ? 'animate-spin' : ''} />
-                      {fetchingWidgets ? 'Fetching…' : 'Fetch from API'}
-                    </button>
+                  <div className="sm:col-span-2">
+                    <div className="mb-1.5 flex items-center justify-between gap-3">
+                      <label className="text-[11px] font-medium text-gray-700">Widget ID</label>
+                      <button
+                        type="button"
+                        onClick={fetchWidgets}
+                        disabled={fetchingWidgets}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700 disabled:opacity-40"
+                      >
+                        <RefreshCcw size={14} className={fetchingWidgets ? 'animate-spin' : ''} />
+                        {fetchingWidgets ? 'Fetching…' : 'Fetch from API'}
+                      </button>
+                    </div>
+
+                    {widgets.length > 0 ? (
+                      <select
+                        value={localConfig.widgetId}
+                        onChange={e => updateField('widgetId', e.target.value)}
+                        className={inputClassName}
+                      >
+                        <option value="">— select a widget —</option>
+                        {widgets.map(w => {
+                          let strategyKey = w.name;
+                          try { strategyKey = JSON.parse(w.strategy)?.key ?? w.name; } catch {}
+                          return <option key={w.id} value={String(w.id)}>{w.name} ({strategyKey})</option>;
+                        })}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        className={inputClassName}
+                        value={localConfig.widgetId}
+                        onChange={e => updateField('widgetId', e.target.value)}
+                      />
+                    )}
+
+                    {widgetFetchError && <p className="mt-2 text-sm text-red-600">{widgetFetchError}</p>}
+                    <p className="mt-2 text-[11px] text-gray-500">Optional — leave blank to use request parameters directly. Widgets pre-configure strategy, filters &amp; ranking.</p>
                   </div>
-                  {widgets.length > 0 ? (
-                    <select
-                      value={localConfig.widgetId}
-                      onChange={e => updateField('widgetId', e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2.5 rounded text-zinc-100 focus:border-green-500/50 outline-none transition-all text-[11px]"
-                    >
-                      <option value="">— select a widget —</option>
-                      {widgets.map(w => {
-                        let strategyKey = w.name;
-                        try { strategyKey = JSON.parse(w.strategy)?.key ?? w.name; } catch {}
-                        return <option key={w.id} value={String(w.id)}>{w.name} ({strategyKey})</option>;
-                      })}
-                    </select>
-                  ) : (
-                    <input
-                      type="text"
-                      className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2.5 rounded text-zinc-100 focus:border-green-500/50 focus:bg-zinc-800/50 outline-none transition-all placeholder:text-zinc-700"
-                      value={localConfig.widgetId}
-                      onChange={e => updateField('widgetId', e.target.value)}
-                    />
-                  )}
-                  {widgetFetchError && <p className="mt-1 text-[9px] text-red-400">{widgetFetchError}</p>}
-                  <p className="mt-1.5 text-[8px] text-zinc-600 italic">Optional — leave blank to use request parameters directly. Widgets pre-configure strategy, filters &amp; ranking.</p>
                 </div>
-              </div>
-            </section>
+              </section>
 
-            {/* Section: Strategy & Search */}
-            <section>
-              <SectionHeader icon={<Search size={14}/>} title="Search & Strategy" />
-              <div className="grid grid-cols-2 gap-4">
-                <ConfigField label="Strategy" value={localConfig.strategy} onChange={(v: string) => updateField('strategy', v)} />
-                <ConfigField label="Max Products" type="number" value={localConfig.maxProducts} onChange={(v: string) => updateField('maxProducts', parseInt(v))} />
-                <ConfigField label="Items Per Page" type="number" value={localConfig.itemsPerPage} onChange={(v: string) => updateField('itemsPerPage', parseInt(v))} />
-                <div className="flex items-center gap-2 col-span-2">
-                  <Toggle label="Bucket Size" checked={localConfig.useBucketSize} onChange={(v: boolean) => updateField('useBucketSize', v)} />
-                  {localConfig.useBucketSize && (
-                    <ConfigField label="" type="number" value={localConfig.bucketSize} onChange={(v: string) => updateField('bucketSize', parseInt(v))} className="flex-1" />
-                  )}
-                </div>
-                <div className="flex items-center gap-2 col-span-2">
-                  <Toggle label="Search Formula" checked={localConfig.useSearchFormula} onChange={(v: boolean) => updateField('useSearchFormula', v)} />
-                  {localConfig.useSearchFormula && (
-                    <input type="text" value={localConfig.searchFormula} onChange={(e) => updateField('searchFormula', e.target.value)} className="flex-1 bg-black/30 border border-gray-700 rounded px-2 py-1 text-[9px]" />
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center gap-4 mt-2 col-span-2">
-                  <Toggle label="Suggest Mode" checked={localConfig.suggestMode} onChange={(v: boolean) => updateField('suggestMode', v)} />
-                  <Toggle label="Explain Mode" checked={localConfig.explainMode} onChange={(v: boolean) => updateField('explainMode', v)} />
-                  <Toggle label="Translation" checked={localConfig.translationEnabled} onChange={(v: boolean) => updateField('translationEnabled', v)} />
-                  <Toggle label="PLP Mode" checked={localConfig.plpSearchMode} onChange={(v: boolean) => updateField('plpSearchMode', v)} />
-                  <Toggle label="Sort by Popularity" checked={localConfig.sortByEnabled} onChange={(v: boolean) => updateField('sortByEnabled', v)} />
-                </div>
-              </div>
-            </section>
+              <section>
+                <SectionHeader icon={<Search size={14} />} title="Search & Strategy" />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <ConfigField label="Strategy" value={localConfig.strategy} onChange={(v: string) => updateField('strategy', v)} />
+                  <ConfigField label="Max Products" type="number" value={localConfig.maxProducts} onChange={(v: string) => updateField('maxProducts', parseInt(v))} />
+                  <ConfigField label="Items Per Page" type="number" value={localConfig.itemsPerPage} onChange={(v: string) => updateField('itemsPerPage', parseInt(v))} />
 
-            {/* Section: KNN & AI Parameters */}
-            <section>
-              <SectionHeader icon={<Cpu size={14}/>} title="Semantic & KNN Parameters" />
-              <div className="grid grid-cols-2 gap-4">
-                <ConfigField label="K (Neighbors)" type="number" value={localConfig.k} onChange={(v: string) => updateField('k', parseInt(v))} />
-                <ConfigField label="Num Candidates" type="number" value={localConfig.numCandidates} onChange={(v: string) => updateField('numCandidates', parseInt(v))} />
-                <ConfigField label="Text KNN Threshold" type="number" step="0.01" value={localConfig.textKnnThreshold} onChange={(v: string) => updateField('textKnnThreshold', parseFloat(v))} />
-                <ConfigField label="Image KNN Threshold" type="number" step="0.01" value={localConfig.imageKnnThreshold} onChange={(v: string) => updateField('imageKnnThreshold', parseFloat(v))} />
-                <ConfigField label="Image Boost" type="number" step="0.1" value={localConfig.imageBoost} onChange={(v: string) => updateField('imageBoost', parseFloat(v))} />
-              </div>
-            </section>
+                  <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4 sm:col-span-2">
+                    <Toggle label="Bucket Size" checked={localConfig.useBucketSize} onChange={(v: boolean) => updateField('useBucketSize', v)} />
+                    {localConfig.useBucketSize && (
+                      <input
+                        type="number"
+                        value={localConfig.bucketSize}
+                        onChange={(e) => updateField('bucketSize', parseInt(e.target.value))}
+                        className={inputClassName}
+                      />
+                    )}
+                  </div>
 
-            {/* Section: Context & Geo */}
-            <section>
-              <SectionHeader icon={<Globe size={14}/>} title="Localization & Environment" />
-              <div className="grid grid-cols-2 gap-4">
-                <ConfigField label="Context Type (type)" value={localConfig.ctxType} onChange={(v: string) => updateField('ctxType', v)} description="e.g. HOMEPAGE" />
-                <ConfigField label="Language (lng)" value={localConfig.language} onChange={(v: string) => updateField('language', v)} />
-                <div className="flex items-center gap-2 col-span-2">
-                  <Toggle label="Locale" checked={localConfig.useLocale} onChange={(v: boolean) => updateField('useLocale', v)} />
-                  {localConfig.useLocale && (
-                    <input type="text" value={localConfig.locale} onChange={(e) => updateField('locale', e.target.value)} className="flex-1 bg-black/30 border border-gray-700 rounded px-2 py-1 text-[9px]" />
-                  )}
+                  <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4 sm:col-span-2">
+                    <Toggle label="Search Formula" checked={localConfig.useSearchFormula} onChange={(v: boolean) => updateField('useSearchFormula', v)} />
+                    {localConfig.useSearchFormula && (
+                      <input
+                        type="text"
+                        value={localConfig.searchFormula}
+                        onChange={(e) => updateField('searchFormula', e.target.value)}
+                        className={inputClassName}
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-x-6 gap-y-3 rounded-xl border border-gray-200 bg-white p-4 sm:col-span-2">
+                    <Toggle label="Suggest Mode" checked={localConfig.suggestMode} onChange={(v: boolean) => updateField('suggestMode', v)} />
+                    <Toggle label="Explain Mode" checked={localConfig.explainMode} onChange={(v: boolean) => updateField('explainMode', v)} />
+                    <Toggle label="Translation" checked={localConfig.translationEnabled} onChange={(v: boolean) => updateField('translationEnabled', v)} />
+                    <Toggle label="PLP Mode" checked={localConfig.plpSearchMode} onChange={(v: boolean) => updateField('plpSearchMode', v)} />
+                    <Toggle label="Sort by Popularity" checked={localConfig.sortByEnabled} onChange={(v: boolean) => updateField('sortByEnabled', v)} />
+                  </div>
                 </div>
-                <ConfigField label="Geo Code" value={localConfig.geoCode} onChange={(v: string) => updateField('geoCode', v)} />
-                <ConfigField label="Geo Region" value={localConfig.geoRegionCode} onChange={(v: string) => updateField('geoRegionCode', v)} />
-                <ConfigField label="Visitor ID (uid)" value={localConfig.uid} onChange={(v: string) => updateField('uid', v)} className="col-span-2" />
-                <ConfigField label="Currency" value={localConfig.currency} onChange={(v: string) => updateField('currency', v.toUpperCase())} />
-                <div className="col-span-2">
+              </section>
+
+              <section>
+                <SectionHeader icon={<Cpu size={14} />} title="Semantic & KNN Parameters" />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <ConfigField label="K (Neighbors)" type="number" value={localConfig.k} onChange={(v: string) => updateField('k', parseInt(v))} />
+                  <ConfigField label="Num Candidates" type="number" value={localConfig.numCandidates} onChange={(v: string) => updateField('numCandidates', parseInt(v))} />
+                  <ConfigField label="Text KNN Threshold" type="number" step="0.01" value={localConfig.textKnnThreshold} onChange={(v: string) => updateField('textKnnThreshold', parseFloat(v))} />
+                  <ConfigField label="Image KNN Threshold" type="number" step="0.01" value={localConfig.imageKnnThreshold} onChange={(v: string) => updateField('imageKnnThreshold', parseFloat(v))} />
+                  <ConfigField label="Image Boost" type="number" step="0.1" value={localConfig.imageBoost} onChange={(v: string) => updateField('imageBoost', parseFloat(v))} />
+                </div>
+              </section>
+
+              <section>
+                <SectionHeader icon={<Globe size={14} />} title="Localization & Environment" />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <ConfigField label="Context Type (type)" value={localConfig.ctxType} onChange={(v: string) => updateField('ctxType', v)} description="e.g. HOMEPAGE" />
+                  <ConfigField label="Language (lng)" value={localConfig.language} onChange={(v: string) => updateField('language', v)} />
+
+                  <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4 sm:col-span-2">
+                    <Toggle label="Locale" checked={localConfig.useLocale} onChange={(v: boolean) => updateField('useLocale', v)} />
+                    {localConfig.useLocale && (
+                      <input
+                        type="text"
+                        value={localConfig.locale}
+                        onChange={(e) => updateField('locale', e.target.value)}
+                        className={inputClassName}
+                      />
+                    )}
+                  </div>
+
+                  <ConfigField label="Geo Code" value={localConfig.geoCode} onChange={(v: string) => updateField('geoCode', v)} />
+                  <ConfigField label="Geo Region" value={localConfig.geoRegionCode} onChange={(v: string) => updateField('geoRegionCode', v)} />
+                  <ConfigField label="Visitor ID (uid)" value={localConfig.uid} onChange={(v: string) => updateField('uid', v)} className="sm:col-span-2" />
+                  <ConfigField label="Currency" value={localConfig.currency} onChange={(v: string) => updateField('currency', v.toUpperCase())} />
                   <ConfigField
                     label="Category Path"
                     value={localConfig.categoryPath}
                     onChange={(v: string) => updateField('categoryPath', v)}
                     description="Format: Sinsay / Women / Search"
+                    className="sm:col-span-2"
                   />
                 </div>
-              </div>
-            </section>
+              </section>
 
-            {/* Section: Mapping */}
-            <section>
-              <SectionHeader icon={<Layout size={14}/>} title="Field Priority Mapping" />
-              <div className="space-y-4">
-                <ConfigField 
-                  label="Title (priority list)" 
-                  value={localConfig.mapping.title.join(', ')} 
-                  onChange={(v: string) => setLocalConfig({...localConfig, mapping: {...localConfig.mapping, title: v.split(',').map((s: string) => s.trim())}})} 
-                />
-                <ConfigField 
-                  label="Images (priority list)" 
-                  value={localConfig.mapping.image.join(', ')} 
-                  onChange={(v: string) => setLocalConfig({...localConfig, mapping: {...localConfig.mapping, image: v.split(',').map((s: string) => s.trim())}})} 
-                />
-                <ConfigField 
-                  label="Price (priority list)" 
-                  value={localConfig.mapping.price.join(', ')} 
-                  onChange={(v: string) => setLocalConfig({...localConfig, mapping: {...localConfig.mapping, price: v.split(',').map((s: string) => s.trim())}})} 
-                />
-              </div>
-            </section>
+              <section>
+                <SectionHeader icon={<Layout size={14} />} title="Field Priority Mapping" />
+                <div className="space-y-4">
+                  <ConfigField
+                    label="Title (priority list)"
+                    value={localConfig.mapping.title.join(', ')}
+                    onChange={(v: string) => setLocalConfig({ ...localConfig, mapping: { ...localConfig.mapping, title: v.split(',').map((s: string) => s.trim()) } })}
+                  />
+                  <ConfigField
+                    label="Images (priority list)"
+                    value={localConfig.mapping.image.join(', ')}
+                    onChange={(v: string) => setLocalConfig({ ...localConfig, mapping: { ...localConfig.mapping, image: v.split(',').map((s: string) => s.trim()) } })}
+                  />
+                  <ConfigField
+                    label="Price (priority list)"
+                    value={localConfig.mapping.price.join(', ')}
+                    onChange={(v: string) => setLocalConfig({ ...localConfig, mapping: { ...localConfig.mapping, price: v.split(',').map((s: string) => s.trim()) } })}
+                  />
+                </div>
+              </section>
 
-            <section>
-              <SectionHeader icon={<Search size={14}/>} title="Priority Boosting" />
-              <div className="space-y-4">
-                <div className="rounded border border-zinc-800 bg-black/20">
-                  <button
-                    type="button"
-                    onClick={() => setShowDynamicBoosting((prev) => !prev)}
-                    className="w-full px-3 py-2 flex items-center justify-between text-left"
-                  >
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-300">Dynamic Attribute Boosting</span>
-                    <ChevronDown size={14} className={`transition-transform ${showDynamicBoosting ? 'rotate-180' : ''}`} />
-                  </button>
+              <section>
+                <SectionHeader icon={<Search size={14} />} title="Priority Boosting" />
+                <div className="space-y-4">
+                  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                    <button
+                      type="button"
+                      onClick={() => setShowDynamicBoosting((prev) => !prev)}
+                      className="flex w-full items-center justify-between bg-gray-50 px-4 py-3 text-left"
+                    >
+                      <span className="text-sm font-medium text-gray-800">Dynamic Attribute Boosting</span>
+                      <ChevronDown size={16} className={`text-gray-500 transition-transform ${showDynamicBoosting ? 'rotate-180' : ''}`} />
+                    </button>
 
-                  {showDynamicBoosting ? (
-                    <div className="px-3 pb-3 space-y-3 border-t border-zinc-800">
-                      <div className="pt-3 flex items-center justify-between gap-2">
-                        <Toggle
-                          label="Enable Dynamic Boosting"
-                          checked={localConfig.useDynamicBoosting}
-                          onChange={(v: boolean) => updateField('useDynamicBoosting', v)}
-                        />
-                        <button
-                          type="button"
-                          onClick={addDynamicBoostingFactor}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded border border-zinc-700 hover:border-zinc-500 text-[9px] uppercase font-bold"
-                        >
-                          <Plus size={12} /> Add Filter
-                        </button>
-                      </div>
-
-                      <p
-                        className="text-[9px] text-zinc-500"
-                        title="Boosts products where a specific attribute matches a value. matchType options: IS (exact match), CONTAINS (substring), IS_NOT (exclusion). weight range: -100-100. Higher = stronger boost."
-                      >
-                        Boosts products where a specific attribute matches a value.
-                      </p>
-
-                      {(localConfig.dynamicBoostingFactors || []).map((factor, idx) => (
-                        <div key={`dynamic-factor-${idx}`} className="rounded border border-zinc-800 p-2 space-y-2">
-                          <div className="grid grid-cols-2 gap-2">
-                            <ConfigField
-                              label="Field"
-                              value={factor.field}
-                              onChange={(v: string) => updateDynamicBoostingFactor(idx, 'field', v)}
-                            />
-                            <ConfigField
-                              label="Value"
-                              value={factor.value}
-                              onChange={(v: string) => updateDynamicBoostingFactor(idx, 'value', v)}
-                            />
-                            <div>
-                              <div className="flex justify-between mb-1.5 px-0.5">
-                                <label className="text-zinc-400 font-bold uppercase tracking-tighter text-[9px]">Match Type</label>
-                              </div>
-                              <select
-                                value={factor.matchType}
-                                onChange={(e) => updateDynamicBoostingFactor(idx, 'matchType', e.target.value)}
-                                className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2.5 rounded text-zinc-100 focus:border-green-500/50 focus:bg-zinc-800/50 outline-none transition-all"
-                              >
-                                <option value="IS">IS</option>
-                                <option value="CONTAINS">CONTAINS</option>
-                                <option value="IS_NOT">IS_NOT</option>
-                              </select>
-                            </div>
-                            <ConfigField
-                              label="Weight (-100 to 100)"
-                              type="number"
-                              value={factor.weight}
-                              onChange={(v: string) => updateDynamicBoostingFactor(idx, 'weight', Number(v))}
-                            />
-                          </div>
+                    {showDynamicBoosting ? (
+                      <div className="space-y-4 border-t border-gray-200 px-4 py-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <Toggle
+                            label="Enable Dynamic Boosting"
+                            checked={localConfig.useDynamicBoosting}
+                            onChange={(v: boolean) => updateField('useDynamicBoosting', v)}
+                          />
                           <button
                             type="button"
-                            onClick={() => removeDynamicBoostingFactor(idx)}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded border border-zinc-700 hover:border-red-500 text-[9px] uppercase font-bold text-zinc-400 hover:text-red-400"
+                            onClick={addDynamicBoostingFactor}
+                            className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 px-3 py-2 text-sm font-medium text-indigo-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50"
                           >
-                            <Trash2 size={12} /> Remove
+                            <Plus size={14} /> Add Filter
                           </button>
                         </div>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
 
-                <div className="rounded border border-zinc-800 bg-black/20">
-                  <button
-                    type="button"
-                    onClick={() => setShowAffinityBoosting((prev) => !prev)}
-                    className="w-full px-3 py-2 flex items-center justify-between text-left"
-                  >
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-zinc-300">Affinity Boosting</span>
-                    <ChevronDown size={14} className={`transition-transform ${showAffinityBoosting ? 'rotate-180' : ''}`} />
-                  </button>
+                        <p
+                          className="text-sm text-gray-500"
+                          title="Boosts products where a specific attribute matches a value. matchType options: IS (exact match), CONTAINS (substring), IS_NOT (exclusion). weight range: -100-100. Higher = stronger boost."
+                        >
+                          Boosts products where a specific attribute matches a value.
+                        </p>
 
-                  {showAffinityBoosting ? (
-                    <div className="px-3 pb-3 space-y-3 border-t border-zinc-800">
-                      <div className="pt-3">
+                        {(localConfig.dynamicBoostingFactors || []).map((factor, idx) => (
+                          <div key={`dynamic-factor-${idx}`} className="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                              <ConfigField
+                                label="Field"
+                                value={factor.field}
+                                onChange={(v: string) => updateDynamicBoostingFactor(idx, 'field', v)}
+                              />
+                              <ConfigField
+                                label="Value"
+                                value={factor.value}
+                                onChange={(v: string) => updateDynamicBoostingFactor(idx, 'value', v)}
+                              />
+                              <div>
+                                <div className="mb-1.5 flex items-center justify-between gap-3">
+                                  <label className="text-[11px] font-medium text-gray-700">Match Type</label>
+                                </div>
+                                <select
+                                  value={factor.matchType}
+                                  onChange={(e) => updateDynamicBoostingFactor(idx, 'matchType', e.target.value)}
+                                  className={inputClassName}
+                                >
+                                  <option value="IS">IS</option>
+                                  <option value="CONTAINS">CONTAINS</option>
+                                  <option value="IS_NOT">IS_NOT</option>
+                                </select>
+                              </div>
+                              <ConfigField
+                                label="Weight (-100 to 100)"
+                                type="number"
+                                value={factor.weight}
+                                onChange={(v: string) => updateDynamicBoostingFactor(idx, 'weight', Number(v))}
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeDynamicBoostingFactor(idx)}
+                              className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+                            >
+                              <Trash2 size={14} /> Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+                    <button
+                      type="button"
+                      onClick={() => setShowAffinityBoosting((prev) => !prev)}
+                      className="flex w-full items-center justify-between bg-gray-50 px-4 py-3 text-left"
+                    >
+                      <span className="text-sm font-medium text-gray-800">Affinity Boosting</span>
+                      <ChevronDown size={16} className={`text-gray-500 transition-transform ${showAffinityBoosting ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {showAffinityBoosting ? (
+                      <div className="space-y-4 border-t border-gray-200 px-4 py-4">
                         <Toggle
                           label="Enable Affinity Boosting"
                           checked={localConfig.useAffinityBoosting}
                           onChange={(v: boolean) => updateField('useAffinityBoosting', v)}
                         />
-                      </div>
 
-                      <ConfigField
-                        label="Affinity Weight (-100 to 100)"
-                        type="number"
-                        value={localConfig.affinityBoostWeight}
-                        onChange={(v: string) => updateField('affinityBoostWeight', Math.max(-100, Math.min(100, Number(v) || 0)))}
-                      />
-
-                      <div>
-                        <div className="flex justify-between mb-1.5 px-0.5">
-                          <label className="text-zinc-400 font-bold uppercase tracking-tighter text-[9px]">Affinity Profile JSON</label>
-                        </div>
-                        <textarea
-                          value={localConfig.affinityProfileJson}
-                          onChange={(e) => updateField('affinityProfileJson', e.target.value)}
-                          rows={8}
-                          className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2.5 rounded text-zinc-100 focus:border-green-500/50 focus:bg-zinc-800/50 outline-none transition-all placeholder:text-zinc-700 resize-y"
+                        <ConfigField
+                          label="Affinity Weight (-100 to 100)"
+                          type="number"
+                          value={localConfig.affinityBoostWeight}
+                          onChange={(v: string) => updateField('affinityBoostWeight', Math.max(-100, Math.min(100, Number(v) || 0)))}
                         />
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </section>
 
-            {/* Actions */}
-            <div className="sticky bottom-0 bg-[#0f0f0f] pt-6 pb-2 border-t border-gray-800 flex flex-col gap-3">
-              <button 
+                        <div>
+                          <div className="mb-1.5 flex items-center justify-between gap-3">
+                            <label className="text-[11px] font-medium text-gray-700">Affinity Profile JSON</label>
+                          </div>
+                          <textarea
+                            value={localConfig.affinityProfileJson}
+                            onChange={(e) => updateField('affinityProfileJson', e.target.value)}
+                            rows={8}
+                            className={`${inputClassName} resize-y`}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </section>
+            </div>
+          ) : activeTab === 'payload' ? (
+            <div className="space-y-6 pb-6">
+              <div className="flex items-center justify-between gap-4">
+                <SectionHeader icon={<Codepen size={14} />} title="Final Request Payload" />
+                {lastRequestPayload && (
+                  <button
+                    type="button"
+                    onClick={handleCopyRequest}
+                    className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                      copied
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {copied ? <Check size={14} /> : <Copy size={14} />}
+                    {copied ? 'Copied' : 'Copy Payload'}
+                  </button>
+                )}
+              </div>
+              <p className="text-sm text-gray-500">Copy-paste this payload into API clients for direct testing.</p>
+              <div className={`${codeBlockClassName} overflow-x-auto p-4`}>
+                <pre className="whitespace-pre-wrap break-all font-mono text-xs leading-6 text-gray-100">
+                  {lastRequestPayload ? JSON.stringify(lastRequestPayload, null, 2) : '// No request captured yet. Perform a search first.'}
+                </pre>
+              </div>
+            </div>
+          ) : (
+            <NetworkTab log={requestLog} onClear={clearLog} />
+          )}
+        </div>
+
+        {activeTab === 'config' && (
+          <div className="shrink-0 border-t border-gray-200 bg-white px-6 py-4">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
                 onClick={handleSave}
-                className="w-full bg-sinsay-red hover:bg-[#b00000] text-white font-bold py-4 rounded uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
               >
-                <Save size={18} /> Update API Session
+                <Save size={16} /> Save
               </button>
-              <button 
+              <button
+                type="button"
                 onClick={handleReset}
-                className="w-full bg-transparent border border-gray-700 hover:bg-gray-800 text-gray-500 py-3 rounded flex items-center justify-center gap-2 transition-all"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-3 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50"
               >
-                <RefreshCw size={14} /> Factory Reset
+                <RefreshCw size={16} /> Factory Reset
               </button>
             </div>
           </div>
-        ) : activeTab === 'payload' ? (
-          <div className="pb-20">
-            <div className="flex justify-between items-center mb-4">
-              <SectionHeader icon={<Codepen size={14}/>} title="Final Request Payload" />
-              {lastRequestPayload && (
-                <button 
-                  onClick={handleCopyRequest}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded border transition-all text-[9px] uppercase font-bold ${
-                    copied 
-                    ? 'bg-green-500/20 border-green-500/50 text-green-500' 
-                    : 'bg-white/5 border-white/10 text-zinc-400 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  {copied ? <Check size={12}/> : <Copy size={12}/>}
-                  {copied ? 'Copied' : 'Copy Payload'}
-                </button>
-              )}
-            </div>
-            <p className="text-zinc-500 text-[9px] mb-4">Copy-paste this payload into API clients for direct testing.</p>
-            <div className="relative bg-black/40 border border-white/5 p-4 rounded-lg overflow-x-auto group">
-              <pre className="text-green-500/80 text-[9px] selection:bg-green-500/20">
-                {lastRequestPayload ? JSON.stringify(lastRequestPayload, null, 2) : "// No request captured yet. Perform a search first."}
-              </pre>
-            </div>
-          </div>
-        ) : (
-          <NetworkTab log={requestLog} onClear={clearLog} />
         )}
       </motion.div>
     </div>
@@ -535,21 +586,26 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
 };
 
 const SectionHeader = ({ icon, title }: any) => (
-  <h3 className="text-zinc-500 mb-6 uppercase flex items-center gap-2 font-bold tracking-[0.2em] text-[9px]">
-    {icon} {title}
-  </h3>
+  <div className="mb-4 flex items-center gap-2 border-b border-gray-100 pb-2">
+    <span className="text-gray-400">{icon}</span>
+    <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">{title}</h3>
+  </div>
 );
 
-const ConfigField = ({ label, value, onChange, description, type = "text", step, className = "" }: any) => (
+const ConfigField = ({ label, value, onChange, description, type = 'text', step, className = '' }: any) => (
   <div className={className}>
-    <div className="flex justify-between mb-1.5 px-0.5">
-      <label className="text-zinc-400 font-bold uppercase tracking-tighter text-[9px]">{label}</label>
-      {description && <span className="text-zinc-600 italic text-[8px]">{description}</span>}
+    <div className="mb-1.5 flex items-center justify-between gap-3">
+      {label ? (
+        <label className="text-[11px] font-medium text-gray-700">{label}</label>
+      ) : (
+        <span className="h-[17px]" />
+      )}
+      {description && <span className="text-[11px] text-gray-500">{description}</span>}
     </div>
-    <input 
+    <input
       type={type}
       step={step}
-      className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2.5 rounded text-zinc-100 focus:border-green-500/50 focus:bg-zinc-800/50 outline-none transition-all placeholder:text-zinc-700"
+      className={inputClassName}
       value={value}
       onChange={(e) => onChange(e.target.value)}
     />
@@ -557,32 +613,44 @@ const ConfigField = ({ label, value, onChange, description, type = "text", step,
 );
 
 const Toggle = ({ label, checked, onChange }: any) => (
-  <label className="flex items-center gap-2 cursor-pointer group">
-    <div 
+  <div className="flex items-center gap-3">
+    <button
+      type="button"
       onClick={() => onChange(!checked)}
-      className={`relative w-8 h-4 rounded-full transition-colors ${checked ? 'bg-green-600' : 'bg-zinc-800'}`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-indigo-600' : 'bg-gray-300'}`}
+      aria-pressed={checked}
     >
-      <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
-    </div>
-    <span className="text-zinc-500 group-hover:text-zinc-300 transition-colors uppercase text-[9px] font-bold">{label}</span>
-  </label>
+      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
+    </button>
+    <span className="text-sm font-medium text-gray-700">{label}</span>
+  </div>
 );
 
-import { useState as useLocalState } from 'react';
-import { RequestLogEntry } from '../context/RequestLogContext';
+const getStatusBadgeClassName = (status?: number | null, hasError?: boolean) => {
+  if (hasError || (status != null && status >= 400)) {
+    return 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-200';
+  }
+
+  if (status != null && status >= 200) {
+    return 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200';
+  }
+
+  return 'bg-gray-100 text-gray-600 ring-1 ring-inset ring-gray-200';
+};
 
 const NetworkTab = ({ log, onClear }: { log: RequestLogEntry[]; onClear: () => void }) => {
   const [selected, setSelected] = useLocalState<string | null>(log[0]?.id ?? null);
   const entry = log.find(e => e.id === selected) ?? log[0] ?? null;
 
   return (
-    <div className="pb-20 flex flex-col gap-4">
-      <div className="flex justify-between items-center">
-        <SectionHeader icon={<Wifi size={14}/>} title="Network Log" />
+    <div className="flex flex-col gap-6 pb-6">
+      <div className="flex items-center justify-between gap-4">
+        <SectionHeader icon={<Wifi size={14} />} title="Network Log" />
         {log.length > 0 && (
           <button
+            type="button"
             onClick={onClear}
-            className="text-[8px] uppercase font-bold tracking-wider text-zinc-600 hover:text-red-400 transition-colors"
+            className="text-sm font-medium text-red-600 transition-colors hover:text-red-700"
           >
             Clear
           </button>
@@ -590,70 +658,84 @@ const NetworkTab = ({ log, onClear }: { log: RequestLogEntry[]; onClear: () => v
       </div>
 
       {log.length === 0 ? (
-        <p className="text-zinc-600 text-[9px]">No requests yet. Perform a search to see traffic.</p>
+        <div className="rounded-xl border border-dashed border-gray-300 bg-white px-4 py-10 text-center text-sm text-gray-500">
+          No requests yet. Perform a search to see traffic.
+        </div>
       ) : (
-        <div className="flex flex-col gap-2">
-          {/* Request list */}
-          <div className="space-y-1 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
-            {log.map((e, i) => (
-              <button
-                key={e.id}
-                onClick={() => setSelected(e.id)}
-                className={`w-full text-left px-3 py-2 rounded flex items-center gap-3 transition-colors ${selected === e.id ? 'bg-white/10' : 'hover:bg-white/5'}`}
-              >
-                <span className="text-[7px] text-zinc-600 shrink-0 w-5">#{log.length - i}</span>
-                <span className={`text-[8px] font-bold uppercase w-6 shrink-0 ${e.error ? 'text-red-400' : e.status && e.status >= 400 ? 'text-orange-400' : 'text-green-400'}`}>
-                  {e.status ?? '…'}
-                </span>
-                <span className="text-[8px] font-bold text-zinc-400 w-8 shrink-0">{e.method}</span>
-                <span className="text-[8px] text-zinc-300 truncate flex-1">{e.url}</span>
-                {e.durationMs != null && (
-                  <span className="text-[8px] text-zinc-600 shrink-0">{e.durationMs}ms</span>
-                )}
-                <span className="text-[7px] text-zinc-600 shrink-0">{e.timestamp.toLocaleTimeString()}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Detail pane */}
-          {entry && (
-            <div className="border border-white/5 rounded-lg overflow-hidden">
-              {/* Show upstream (DY) details if available, otherwise proxy details */}
-              {entry.upstream ? (
-                <>
-                  <div className="px-3 py-2 bg-black/30 text-[8px] text-zinc-500 font-mono border-b border-white/5">
-                    <span className="text-zinc-600 text-[7px] uppercase tracking-wider mr-2">DY API</span>
-                    <span className="text-zinc-300 font-bold">POST</span>
-                    {' '}{entry.upstream.url}
-                    <span className={`ml-3 font-bold ${entry.upstream.status >= 400 ? 'text-orange-400' : 'text-green-400'}`}>
-                      {entry.upstream.status} {entry.upstream.statusText}
+        <div className="space-y-4">
+          <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+            <div className="grid grid-cols-[52px_72px_64px_minmax(0,1fr)] gap-3 border-b border-gray-200 bg-gray-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+              <span>#</span>
+              <span>Status</span>
+              <span>Method</span>
+              <span>Request</span>
+            </div>
+            <div className="max-h-64 overflow-y-auto custom-scrollbar">
+              {log.map((e, i) => (
+                <button
+                  type="button"
+                  key={e.id}
+                  onClick={() => setSelected(e.id)}
+                  className={`grid w-full grid-cols-[52px_72px_64px_minmax(0,1fr)] gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors last:border-b-0 ${selected === e.id ? 'bg-indigo-50' : 'hover:bg-gray-50'}`}
+                >
+                  <div className="space-y-1 text-xs text-gray-500">
+                    <div>#{log.length - i}</div>
+                    <div>{e.timestamp.toLocaleTimeString()}</div>
+                  </div>
+                  <div>
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusBadgeClassName(e.status, !!e.error)}`}>
+                      {e.status ?? '…'}
                     </span>
                   </div>
-                  <div className="flex flex-col">
+                  <div className="text-sm font-medium text-gray-700">{e.method}</div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm text-gray-800">{e.url}</div>
+                    <div className="mt-1 text-xs text-gray-500">{e.durationMs != null ? `${e.durationMs}ms` : 'Pending'}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {entry && (
+            <div className="space-y-3 rounded-xl border border-gray-200 bg-white p-4">
+              {entry.upstream ? (
+                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                  <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-gray-600">DY API</span>
+                  <span className="font-semibold text-gray-800">POST</span>
+                  <span className="min-w-0 flex-1 truncate">{entry.upstream.url}</span>
+                  <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusBadgeClassName(entry.upstream.status, false)}`}>
+                    {entry.upstream.status} {entry.upstream.statusText}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                  <span className="font-semibold text-gray-800">{entry.method}</span>
+                  <span className="min-w-0 flex-1 truncate">{entry.url}</span>
+                  {entry.status != null && (
+                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getStatusBadgeClassName(entry.status, !!entry.error)}`}>
+                      {entry.status} {entry.statusText}
+                    </span>
+                  )}
+                  {entry.durationMs != null && <span className="text-xs text-gray-500">{entry.durationMs}ms</span>}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                {entry.upstream ? (
+                  <>
                     <DetailPane label="request" content={entry.upstream.requestBody} isError={false} />
                     <DetailPane label="response" content={entry.responseBody} isError={!!entry.error} />
                     <DetailPane label="headers" content={entry.upstream.headers} isError={false} collapsed />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="px-3 py-2 bg-black/30 text-[8px] text-zinc-500 font-mono border-b border-white/5">
-                    <span className="text-zinc-300 font-bold">{entry.method}</span>
-                    {' '}{entry.url}
-                    {entry.status != null && (
-                      <span className={`ml-3 font-bold ${entry.status >= 400 ? 'text-orange-400' : 'text-green-400'}`}>
-                        {entry.status} {entry.statusText}
-                      </span>
-                    )}
-                    {entry.durationMs != null && <span className="ml-3 text-zinc-600">{entry.durationMs}ms</span>}
-                  </div>
-                  <div className="flex flex-col">
+                  </>
+                ) : (
+                  <>
                     <DetailPane label="request" content={entry.requestBody} isError={false} />
                     <DetailPane label="response" content={entry.error ?? entry.responseBody} isError={!!entry.error} />
                     <DetailPane label="headers" content={Object.keys(entry.responseHeaders).length > 0 ? entry.responseHeaders : null} isError={false} collapsed />
-                  </div>
-                </>
-              )}
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -668,20 +750,21 @@ const DetailPane = ({ label, content, isError, collapsed }: { label: 'request' |
   const title = label === 'request' ? 'Request Body' : label === 'headers' ? 'Response Headers' : 'Response Body';
 
   return (
-    <div className="border-t border-white/5 first:border-t-0">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
       <button
+        type="button"
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-3 py-2 text-[8px] uppercase font-bold tracking-wider text-zinc-500 hover:text-zinc-300 transition-colors bg-black/20"
+        className="flex w-full items-center justify-between bg-gray-50 px-4 py-3 text-left text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"
       >
         {title}
-        <ChevronDown size={10} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={16} className={`text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className="p-3 overflow-x-auto max-h-72 custom-scrollbar">
+        <div className="border-t border-gray-200 bg-gray-900 p-4 overflow-x-auto custom-scrollbar max-h-72">
           {isEmpty ? (
-            <span className="text-zinc-700 text-[8px]">—</span>
+            <span className="font-mono text-xs text-gray-500">—</span>
           ) : (
-            <pre className={`text-[8px] leading-relaxed whitespace-pre-wrap break-all ${isError ? 'text-red-400' : label === 'headers' ? 'text-zinc-400' : 'text-green-400/80'}`}>
+            <pre className={`whitespace-pre-wrap break-all font-mono text-xs leading-6 ${isError ? 'text-red-300' : label === 'headers' ? 'text-gray-300' : 'text-gray-100'}`}>
               {typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
             </pre>
           )}
