@@ -28,7 +28,7 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
   const { activePersona } = usePersona();
 
   return useQuery({
-    queryKey: ['dySearch', query, offset, filters, config.sectionId, config.feedId, config, activePersona?.id],
+    queryKey: ['dySearch', query, offset, filters, config.sectionId, config.feedId, config, activePersona?.id, activePersona?.affinityProfileJson],
     queryFn: async (): Promise<DYSearchResponse> => {
       // If we don't have IDs, return early (though Query will be disabled)
       if (!config.sectionId || !config.feedId) {
