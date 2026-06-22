@@ -20,6 +20,7 @@ export interface DYSearchResponse {
   spellCheckedQuery: string | null;
   translatedQuery: string | null;
   errorMessage: string | null;
+  isFallback: boolean;
 }
 
 export const useDYSearch = (query: string, offset: number, filters: any[] = []) => {
@@ -140,7 +141,7 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
         searchObj.locale = config.locale;
       }
 
-      const payload = {
+      const buildPayload = (searchOverride: any) => ({
         data: [
           {
             fId: fId,
@@ -150,7 +151,7 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
             filtering: [],
             strategy: config.strategy,
             searchFilters: filters,
-            search: searchObj,
+            search: searchOverride,
           },
         ],
         ctx: { 
@@ -162,63 +163,58 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
           geoRegionCode: config.geoRegionCode
         },
         ...(config.uid ? { uid: config.uid } : {}),
-      };
-
-      // Create clean payload for display (without region/sectionId) 
-      setLastRequestPayload(payload);
-
-      // Include region and sectionId for the proxy endpoint to route correctly
-      const requestPayload = {
-        region,
-        sectionId: config.sectionId,
-        ...payload
-      };
-
-      const response = await loggedFetch('/api/dy-search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestPayload),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`DY API Error: ${response.status} - ${errorText}`);
-      }
-
-      const json = await response.json();
-      
-      // LOG RAW RESPONSE FOR DEBUGGING (Required by user)
-      console.log('DY Search Response Data:', json);
-
-      if (!json.response || !Array.isArray(json.response) || json.response.length === 0) {
-        console.error('DY API: Unexpected response structure', json);
-        throw new Error('Invalid response format: Missing "response" array or empty response.');
-      }
-
-      // Extract totalNumResults from the first response object
-      const totalResults = json.response?.[0]?.totalNumResults ?? 0;
-
-      // Parse first response as main results
-      const firstResponse = json.response[0];
-      return {
-        totalNumResults: totalResults,
-        slots: firstResponse.slots || [],
-        facets: firstResponse.facets || {},
-        spellCheckedQuery: firstResponse.spellCheckedQuery || null,
-        translatedQuery: firstResponse.translatedQuery || null,
-        errorMessage: firstResponse.errorMessage || null
+      const fetchResults = async (searchOverride: any): Promise<{ json: any }> => {
+        const payload = buildPayload(searchOverride);
+        const requestPayload = { region, sectionId: config.sectionId, ...payload };
+        const response = await loggedFetch('/api/dy-search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestPayload),
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`DY API Error: ${response.status} - ${errorText}`);
+        }
+        return { json: await response.json() };
       };
 
-      const result = json.response[0];
+      const parseResponse = (json: any, isFallback: boolean): DYSearchResponse => {
+        console.log('DY Search Response Data:', json);
+        if (!json.response || !Array.isArray(json.response) || json.response.length === 0) {
+          console.error('DY API: Unexpected response structure', json);
+          throw new Error('Invalid response format: Missing "response" array or empty response.');
+        }
+        const firstResponse = json.response[0];
+        return {
+          totalNumResults: firstResponse.totalNumResults ?? 0,
+          slots: firstResponse.slots || [],
+          facets: firstResponse.facets || {},
+          spellCheckedQuery: firstResponse.spellCheckedQuery || null,
+          translatedQuery: firstResponse.translatedQuery || null,
+          errorMessage: firstResponse.errorMessage || null,
+          isFallback,
+        };
+      };
 
-      if (!result.slots) {
-        console.warn('DY API: No slots field in response[0]', result);
-        return { ...result, slots: [] };
+      const hasAffinityProfile = Object.keys(affinityProfile).length > 0;
+
+      // Create clean payload for display (without region/sectionId)
+      setLastRequestPayload(buildPayload(searchObj));
+
+      const { json: primaryJson } = await fetchResults(searchObj);
+      const primaryResult = parseResponse(primaryJson, false);
+
+      // Fallback: if affinity profile was used but returned 0 results, retry without it
+      if (hasAffinityProfile && primaryResult.totalNumResults === 0) {
+        const fallbackSearchObj = { ...searchObj };
+        delete fallbackSearchObj.affinityProfile;
+        const { json: fallbackJson } = await fetchResults(fallbackSearchObj);
+        return parseResponse(fallbackJson, true);
       }
 
-      return result;
+      return primaryResult;
     },
     enabled: !!config.sectionId && !!config.feedId,
   });

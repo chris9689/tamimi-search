@@ -49,6 +49,7 @@ export default function App() {
 
   const { data, isLoading } = useDYSearch(debouncedSearch, offset, selectedFilters);
   const { items, facets, totalNumResults } = extractDyPayload(data);
+  const isFallback = data?.isFallback ?? false;
 
   const toggleFilter = (field: string, value: string) => {
     setSelectedFilters(prev => {
@@ -177,7 +178,7 @@ export default function App() {
             <h1 className="text-3xl font-light uppercase tracking-tight flex items-center gap-4">
               {debouncedSearch ? `Search Results: ${debouncedSearch}` : 'New Arrivals'}
               <span className="text-sm text-gray-400 font-normal normal-case">
-                ({totalNumResults || 0} items)
+                ({totalNumResults || 0} items{isFallback && <span className="text-red-500 text-[10px] ml-0.5" title="Showing fallback results (affinity profile returned no results)">f</span>})
               </span>
             </h1>
           </div>
