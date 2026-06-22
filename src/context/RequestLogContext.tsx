@@ -63,9 +63,13 @@ export const RequestLogProvider = ({ children }: { children: React.ReactNode }) 
 
     setLog(prev => [entry, ...prev].slice(0, 50));
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25_000);
+
     const start = performance.now();
     try {
-      const response = await fetch(url, init);
+      const response = await fetch(url, { ...init, signal: controller.signal });
+      clearTimeout(timeoutId);
       const durationMs = Math.round(performance.now() - start);
 
       const responseHeaders: Record<string, string> = {};
@@ -94,6 +98,7 @@ export const RequestLogProvider = ({ children }: { children: React.ReactNode }) 
 
       return response;
     } catch (err) {
+      clearTimeout(timeoutId);
       const durationMs = Math.round(performance.now() - start);
       const error = err instanceof Error ? err.message : String(err);
       setLog(prev => prev.map(e => e.id === id ? { ...e, error, durationMs } : e));

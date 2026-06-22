@@ -23,6 +23,7 @@ export default function App() {
   const [showVisualSearch, setShowVisualSearch] = useState(false);
   const [productImageForSearch, setProductImageForSearch] = useState<string | undefined>();
   const [showMuseChat, setShowMuseChat] = useState(false);
+  const [showErrorDetail, setShowErrorDetail] = useState(false);
 
   const breadcrumbParts = config.categoryPath
     .split('/')
@@ -47,7 +48,7 @@ export default function App() {
     setLogoError(false);
   }, [config.logoUrl]);
 
-  const { data, isLoading } = useDYSearch(debouncedSearch, offset, selectedFilters);
+  const { data, isLoading, isFetching, isError, error, failureCount } = useDYSearch(debouncedSearch, offset, selectedFilters);
   const { items, facets, totalNumResults } = extractDyPayload(data);
   const isFallback = data?.isFallback ?? false;
 
@@ -196,7 +197,7 @@ export default function App() {
         <div className="flex gap-12">
           {/* DY Dynamic Facets Sidebar */}
           <aside className="hidden lg:block w-64 shrink-0 space-y-10">
-            {isLoading ? (
+            {isLoading || isFetching ? (
               Array(4).fill(0).map((_, i) => <SkeletonFilter key={i} />)
             ) : (
               facets.map((facet) => (
@@ -244,8 +245,12 @@ export default function App() {
 
           {/* Product Grid - 4 Columns Responsive */}
           <div className="flex-1">
+            {/* Subtle retrying indicator */}
+            {failureCount > 0 && isFetching && (
+              <p className="text-[11px] text-gray-400 uppercase tracking-widest mb-4 animate-pulse">Retrying…</p>
+            )}
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-12">
-              {isLoading ? (
+              {isLoading || isFetching ? (
                 Array(12).fill(0).map((_, i) => <SkeletonCard key={i} />)
               ) : (
                 items.map((item, idx) => (
@@ -261,9 +266,10 @@ export default function App() {
               )}
             </div>
 
-            {/* Empty State */}
-            {!isLoading && items.length === 0 && (() => {
-              console.warn('Rendering: Zero valid items extracted', { data });
+            {/* Empty / Error State — always shows "No products found" to the end user;
+                error detail is hidden behind a click for debugging during demos */}
+            {!isLoading && !isFetching && items.length === 0 && (() => {
+              console.warn('Rendering: Zero valid items extracted', { data, isError, error });
               return (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                   <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
@@ -273,16 +279,31 @@ export default function App() {
                   <p className="text-gray-400 max-w-sm text-sm">
                     We couldn't find anything matching your search. Try different keywords or adjust your filters.
                   </p>
-                  <button 
+                  <button
                     onClick={() => { setSearchTerm(''); updateSearch(''); setSelectedFilters([]); }}
                     className="mt-8 px-8 py-3 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-gray-900 transition-colors"
                   >
                     Clear all filters
                   </button>
+                  {isError && (
+                    <div className="mt-6">
+                      <button
+                        onClick={() => setShowErrorDetail(v => !v)}
+                        className="text-[10px] text-gray-300 hover:text-gray-500 uppercase tracking-widest transition-colors"
+                      >
+                        {showErrorDetail ? 'Hide detail' : 'Details'}
+                      </button>
+                      {showErrorDetail && (
+                        <p className="mt-2 text-[11px] text-gray-400 max-w-sm font-mono break-all">
+                          {error instanceof Error ? error.message : String(error)}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })()}
-            {!isLoading && totalNumResults > 0 && (
+            {!isLoading && !isFetching && totalNumResults > 0 && (
               <div className="mt-20 flex justify-center items-center gap-4">
                 <button 
                   disabled={offset === 0}

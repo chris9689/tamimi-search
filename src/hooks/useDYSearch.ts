@@ -30,6 +30,13 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
 
   return useQuery({
     queryKey: ['dySearch', query, offset, filters, config.sectionId, config.feedId, config, activePersona?.id, activePersona?.affinityProfileJson],
+    // Retry up to 2× for transient/network/timeout errors; skip retries for 4xx client errors
+    retry: (failureCount, err) => {
+      if (err instanceof Error && /DY API Error: 4\d\d/.test(err.message)) return false;
+      return failureCount < 2;
+    },
+    retryDelay: 1000,
+    staleTime: 30_000,
     queryFn: async (): Promise<DYSearchResponse> => {
       // If we don't have IDs, return early (though Query will be disabled)
       if (!config.sectionId || !config.feedId) {
