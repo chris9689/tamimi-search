@@ -95,11 +95,25 @@ export default function App() {
       <header className="sticky top-0 z-50 frosted-glass shadow-sm">
         <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between gap-8">
           {logoError ? (
-            <div className="text-3xl font-black tracking-tighter uppercase cursor-pointer select-none">
-              Sinsay
+            <div className="relative group">
+              <div className="text-3xl font-black tracking-tighter uppercase cursor-pointer select-none">
+                Sinsay
+              </div>
+              <div className="absolute top-full left-0 mt-2 w-44 bg-white border border-gray-100 shadow-lg rounded-sm opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+                <a href="/benchmark" className="flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
+                  Search Benchmark
+                </a>
+              </div>
             </div>
           ) : (
-            <img src={config.logoUrl || '/logo.png'} alt="Sinsay" className="h-8 cursor-pointer select-none" onError={() => setLogoError(true)} />
+            <div className="relative group">
+              <img src={config.logoUrl || '/logo.png'} alt="Sinsay" className="h-8 cursor-pointer select-none" onError={() => setLogoError(true)} />
+              <div className="absolute top-full left-0 mt-2 w-44 bg-white border border-gray-100 shadow-lg rounded-sm opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+                <a href="/benchmark" className="flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
+                  Search Benchmark
+                </a>
+              </div>
+            </div>
           )}
 
           <div className="flex-1 max-w-xl flex items-center gap-2">
