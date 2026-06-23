@@ -31,6 +31,7 @@ export interface BenchmarkSpec {
   queries: QuerySpec[];
   configurations: BenchmarkConfigItem[];
   queryBoostRules?: QueryBoostRule[];
+    searchFilters?: Array<{ field: string; values?: string[]; min?: number; max?: number }>;
   /** Number of products to show per cell in the report */
   itemsToShow?: number;
 }
@@ -161,6 +162,7 @@ function buildPayload(
   config: DYConfig,
   query: string,
   queryBoostFactors: DynamicBoostingFactor[] = [],
+    searchFilters: Array<{ field: string; values?: string[]; min?: number; max?: number }> = [],
   affinityProfileOverride?: Record<string, unknown>,
 ) {
   const fId = isNaN(Number(config.feedId)) ? config.feedId : Number(config.feedId);
@@ -219,7 +221,7 @@ function buildPayload(
         rules: [],
         filtering: [],
         strategy: config.strategy,
-        searchFilters: [],
+        searchFilters: searchFilters.length > 0 ? searchFilters : [],
         search: searchObj,
       },
     ],
@@ -288,7 +290,7 @@ export async function runBenchmark(
       const label = `"${row.rowKey}" — ${configItem.name}`;
       onProgress(completed, total, label);
 
-      const payload = buildPayload(mergedConfig, row.text, getQueryBoostRules(spec, row.text), row.affinityProfile);
+      const payload = buildPayload(mergedConfig, row.text, getQueryBoostRules(spec, row.text), spec.searchFilters || [], row.affinityProfile);
       const start = performance.now();
       let statusCode: number | null = null;
       let cell: BenchmarkCell;

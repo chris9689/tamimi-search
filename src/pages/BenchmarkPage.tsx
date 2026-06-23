@@ -134,6 +134,7 @@ function normalizeSpecShape(spec: BenchmarkSpec): BenchmarkSpec {
   return {
     ...spec,
     queryBoostRules: Array.isArray(spec.queryBoostRules) ? spec.queryBoostRules : [],
+    searchFilters: Array.isArray(spec.searchFilters) ? spec.searchFilters : [],
   };
 }
 
@@ -158,7 +159,7 @@ export const BenchmarkPage: React.FC = () => {
   const { config } = useConfig();
 
   const [specJson, setSpecJson] = useState<string>(loadSpec);
-  const [activeTab, setActiveTab] = useState<'json' | 'boosts'>('json');
+  const [activeTab, setActiveTab] = useState<'json' | 'boosts' | 'filters'>('json');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<{ completed: number; total: number; label: string } | null>(null);
@@ -285,6 +286,7 @@ export const BenchmarkPage: React.FC = () => {
           <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2">
             <TabButton label="JSON Editor" active={activeTab === 'json'} onClick={() => setActiveTab('json')} />
             <TabButton label="Query Boosting" active={activeTab === 'boosts'} onClick={() => setActiveTab('boosts')} />
+                      <TabButton label="Search Filters" active={activeTab === 'filters'} onClick={() => setActiveTab('filters')} />
           </div>
 
           <div className="p-5">
@@ -298,8 +300,10 @@ export const BenchmarkPage: React.FC = () => {
                   jsonError ? 'border-red-300 focus:border-red-400' : 'border-gray-200 focus:border-black'
                 }`}
               />
-            ) : (
+            ) : activeTab === 'boosts' ? (
               <QueryBoostingTab parsedSpec={parsedSpec} onChange={updateSpec} />
+            ) : (
+              <SearchFiltersTab parsedSpec={parsedSpec} onChange={updateSpec} />
             )}
             {jsonError && (
               <div className="mt-2 flex items-start gap-2 text-red-600 text-[11px]">
@@ -349,6 +353,147 @@ export const BenchmarkPage: React.FC = () => {
       </main>
     </div>
   );
+
+const EMPTY_FILTER: { field: string; values?: string[]; min?: number; max?: number } = {
+  field: '',
+  values: [],
+};
+
+const SearchFiltersTab: React.FC<{
+  parsedSpec: BenchmarkSpec | null;
+  onChange: (updater: (spec: BenchmarkSpec) => BenchmarkSpec) => void;
+}> = ({ parsedSpec, onChange }) => {
+  if (!parsedSpec) {
+    return (
+      <div className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] text-amber-800">
+        Fix JSON first. Then filter table work.
+      </div>
+    );
+  }
+
+  const filters = parsedSpec.searchFilters || [];
+
+  const updateFilter = (
+    index: number,
+    field: 'field' | 'values' | 'min' | 'max',
+    value: string | string[] | number | undefined,
+  ) => {
+    onChange((spec) => ({
+      ...spec,
+      searchFilters: (spec.searchFilters || []).map((filter, filterIndex) => {
+        if (filterIndex !== index) return filter;
+        if (field === 'field') {
+          return { ...filter, [field]: value };
+        } else if (field === 'values') {
+          return { ...filter, values: (value as string[]) || [] };
+        } else if (field === 'min' || field === 'max') {
+          return { ...filter, [field]: value === '' ? undefined : Number(value) || undefined };
+        }
+        return filter;
+      }),
+    }));
+  };
+
+  const addFilter = () => {
+    onChange((spec) => ({
+      ...spec,
+      searchFilters: [...(spec.searchFilters || []), { ...EMPTY_FILTER }],
+    }));
+  };
+
+  const removeFilter = (index: number) => {
+    onChange((spec) => ({
+      ...spec,
+      searchFilters: (spec.searchFilters || []).filter((_, filterIndex) => filterIndex !== index),
+    }));
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-[12px] text-gray-500">
+          Add search filters to all requests. Format: field with values[] OR min/max range.
+        </p>
+        <button
+          onClick={addFilter}
+          className="flex items-center gap-2 px-3 py-2 bg-black text-white text-[11px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"
+        >
+          <Plus size={12} /> Add Filter
+        </button>
+      </div>
+
+      <div className="overflow-x-auto border border-gray-200 rounded-sm">
+        <table className="w-full border-collapse min-w-[900px]">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-widest border-b border-r border-gray-200">Field</th>
+              <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-widest border-b border-r border-gray-200">Values (csv)</th>
+              <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-widest border-b border-r border-gray-200">Min</th>
+              <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-widest border-b border-r border-gray-200">Max</th>
+              <th className="px-3 py-2 text-left text-[11px] font-bold uppercase tracking-widest border-b border-gray-200">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filters.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-3 py-6 text-center text-[12px] text-gray-400">
+                  No search filters yet.
+                </td>
+              </tr>
+            ) : (
+              filters.map((filter, index) => (
+                <tr key={index}>
+                  <td className="px-3 py-2 border-b border-r border-gray-100">
+                    <input
+                      value={filter.field}
+                      onChange={(e) => updateFilter(index, 'field', e.target.value)}
+                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-black"
+                      placeholder="color"
+                    />
+                  </td>
+                  <td className="px-3 py-2 border-b border-r border-gray-100">
+                    <input
+                      value={(filter.values || []).join(', ')}
+                      onChange={(e) => updateFilter(index, 'values', e.target.value.split(',').map((v) => v.trim()).filter(Boolean))}
+                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-black"
+                      placeholder="red, blue, green"
+                    />
+                  </td>
+                  <td className="px-3 py-2 border-b border-r border-gray-100">
+                    <input
+                      type="number"
+                      value={filter.min ?? ''}
+                      onChange={(e) => updateFilter(index, 'min', e.target.value)}
+                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-black"
+                      placeholder="20"
+                    />
+                  </td>
+                  <td className="px-3 py-2 border-b border-r border-gray-100">
+                    <input
+                      type="number"
+                      value={filter.max ?? ''}
+                      onChange={(e) => updateFilter(index, 'max', e.target.value)}
+                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-black"
+                      placeholder="200"
+                    />
+                  </td>
+                  <td className="px-3 py-2 border-b border-gray-100">
+                    <button
+                      onClick={() => removeFilter(index)}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-widest border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 size={12} /> Remove
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 };
 
 const TabButton: React.FC<{ label: string; active: boolean; onClick: () => void }> = ({ label, active, onClick }) => (
