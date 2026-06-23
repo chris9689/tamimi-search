@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { useConfig } from '../context/ConfigContext';
 import { runBenchmark, type BenchmarkRun, type BenchmarkSpec, type QueryBoostRule } from '../utils/benchmarkRunner';
 import { downloadReport } from '../utils/benchmarkReport';
-import { Download, Play, AlertCircle, ChevronDown, ChevronUp, ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { Download, Play, AlertCircle, ChevronDown, ChevronUp, ArrowLeft, Plus, Trash2, Copy } from 'lucide-react';
 
 // ─── Default config stored in localStorage ───────────────────────────────────
 
@@ -451,7 +451,7 @@ const QueryBoostingTab: React.FC<{
 // ─── BenchmarkPage ────────────────────────────────────────────────────────────
 
 export const BenchmarkPage: React.FC = () => {
-  const { config } = useConfig();
+  const { config, syncFiltersFromBenchmark, syncBoostRulesFromBenchmark } = useConfig();
 
   const [specJson, setSpecJson] = useState<string>(loadSpec);
   const [activeTab, setActiveTab] = useState<'json' | 'boosts' | 'filters'>('json');
@@ -460,6 +460,7 @@ export const BenchmarkPage: React.FC = () => {
   const [progress, setProgress] = useState<{ completed: number; total: number; label: string } | null>(null);
   const [result, setResult] = useState<BenchmarkRun | null>(null);
   const [expandedConfigs, setExpandedConfigs] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const abortRef = useRef(false);
 
   // Persist JSON edits to localStorage
@@ -525,6 +526,40 @@ export const BenchmarkPage: React.FC = () => {
     if (result) downloadReport(result);
   }, [result]);
 
+  const handleSyncFilters = useCallback(() => {
+    try {
+      const parsed = normalizeSpecShape(JSON.parse(specJson) as BenchmarkSpec);
+      if (parsed.searchFilters && parsed.searchFilters.length > 0) {
+        syncFiltersFromBenchmark(parsed.searchFilters);
+        setSyncMessage('Filters synced to main search ✓');
+        setTimeout(() => setSyncMessage(null), 3000);
+      } else {
+        setSyncMessage('No filters to sync');
+        setTimeout(() => setSyncMessage(null), 2000);
+      }
+    } catch (err) {
+      setSyncMessage('Error: Invalid spec');
+      setTimeout(() => setSyncMessage(null), 2000);
+    }
+  }, [specJson, syncFiltersFromBenchmark]);
+
+  const handleSyncBoostRules = useCallback(() => {
+    try {
+      const parsed = normalizeSpecShape(JSON.parse(specJson) as BenchmarkSpec);
+      if (parsed.queryBoostRules && parsed.queryBoostRules.length > 0) {
+        syncBoostRulesFromBenchmark(parsed.queryBoostRules);
+        setSyncMessage('Boost rules synced to main search ✓');
+        setTimeout(() => setSyncMessage(null), 3000);
+      } else {
+        setSyncMessage('No boost rules to sync');
+        setTimeout(() => setSyncMessage(null), 2000);
+      }
+    } catch (err) {
+      setSyncMessage('Error: Invalid spec');
+      setTimeout(() => setSyncMessage(null), 2000);
+    }
+  }, [specJson, syncBoostRulesFromBenchmark]);
+
   let parsedSpec: BenchmarkSpec | null = null;
   try {
     parsedSpec = normalizeSpecShape(JSON.parse(specJson) as BenchmarkSpec);
@@ -578,11 +613,34 @@ export const BenchmarkPage: React.FC = () => {
             </button>
           </div>
 
-          <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2">
-            <TabButton label="JSON Editor" active={activeTab === 'json'} onClick={() => setActiveTab('json')} />
-            <TabButton label="Query Boosting" active={activeTab === 'boosts'} onClick={() => setActiveTab('boosts')} />
-                      <TabButton label="Search Filters" active={activeTab === 'filters'} onClick={() => setActiveTab('filters')} />
+          <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2 justify-between">
+            <div className="flex items-center gap-2">
+              <TabButton label="JSON Editor" active={activeTab === 'json'} onClick={() => setActiveTab('json')} />
+              <TabButton label="Query Boosting" active={activeTab === 'boosts'} onClick={() => setActiveTab('boosts')} />
+              <TabButton label="Search Filters" active={activeTab === 'filters'} onClick={() => setActiveTab('filters')} />
+            </div>
+            {activeTab === 'boosts' && (
+              <button
+                onClick={handleSyncBoostRules}
+                className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 text-[11px] font-bold uppercase tracking-widest border border-blue-200 hover:bg-blue-100 transition-colors rounded-sm"
+              >
+                <Copy size={12} /> Sync to Main
+              </button>
+            )}
+            {activeTab === 'filters' && (
+              <button
+                onClick={handleSyncFilters}
+                className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 text-[11px] font-bold uppercase tracking-widest border border-blue-200 hover:bg-blue-100 transition-colors rounded-sm"
+              >
+                <Copy size={12} /> Sync to Main
+              </button>
+            )}
           </div>
+          {syncMessage && (
+            <div className="px-5 py-2 bg-green-50 border-b border-green-200 text-green-700 text-[11px] font-medium">
+              {syncMessage}
+            </div>
+          )}
 
           <div className="p-5">
             {activeTab === 'json' ? (

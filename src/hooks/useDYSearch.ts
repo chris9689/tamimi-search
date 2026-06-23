@@ -24,12 +24,12 @@ export interface DYSearchResponse {
 }
 
 export const useDYSearch = (query: string, offset: number, filters: any[] = []) => {
-  const { config, setLastRequestPayload } = useConfig();
+  const { config, setLastRequestPayload, cacheInvalidationKey } = useConfig();
   const { loggedFetch } = useRequestLog();
   const { activePersona } = usePersona();
 
   return useQuery({
-    queryKey: ['dySearch', query, offset, filters, config.sectionId, config.feedId, config, activePersona?.id, activePersona?.affinityProfileJson],
+    queryKey: ['dySearch', query, offset, filters, config.sectionId, config.feedId, config, activePersona?.id, activePersona?.affinityProfileJson, cacheInvalidationKey],
     // Retry up to 2× for transient/network/timeout errors; skip retries for 4xx client errors
     retry: (failureCount, err) => {
       if (err instanceof Error && /DY API Error: 4\d\d/.test(err.message)) return false;
@@ -50,8 +50,21 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
 
       const clampWeight = (value: number) => Math.max(-100, Math.min(100, value));
 
-      const dynamicPriorityFactors = config.useDynamicBoosting
-        ? (config.dynamicBoostingFactors || [])
+      const normalizedQuery = (query || '').trim().toLowerCase();
+      const queryBoostFactors = (config.queryBoostRules || [])
+        .filter((rule) => rule.query?.trim().toLowerCase() === normalizedQuery)
+        .map((rule) => ({
+          field: rule.field,
+          value: rule.value,
+          matchType: rule.matchType,
+          weight: rule.weight,
+        }));
+
+      const baseDynamicFactors = config.useDynamicBoosting ? (config.dynamicBoostingFactors || []) : [];
+      const allDynamicFactors = [...baseDynamicFactors, ...queryBoostFactors];
+
+      const dynamicPriorityFactors = allDynamicFactors.length > 0
+        ? allDynamicFactors
             .filter((factor) => factor.field?.trim() && factor.value?.trim())
             .map((factor, idx) => ({
               name: `filter_${idx}`,
@@ -157,7 +170,7 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
             rules: [],
             filtering: [],
             strategy: config.strategy,
-            searchFilters: filters,
+            searchFilters: [...(config.searchFilters || []), ...filters],
             search: searchOverride,
           },
         ],

@@ -8,7 +8,7 @@ const inputClassName = 'w-full rounded-lg border border-gray-200 bg-white px-3 p
 const codeBlockClassName = 'rounded-xl border border-gray-800 bg-gray-900 text-gray-100';
 
 export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
-  const { config, setConfig, lastRequestPayload } = useConfig();
+  const { config, setConfig, lastRequestPayload, clearQueryCache } = useConfig();
   const { log: requestLog, loggedFetch, clearLog } = useRequestLog();
   const [localConfig, setLocalConfig] = useState<DYConfig>(config);
   const [activeTab, setActiveTab] = useState<'config' | 'payload' | 'network'>('config');
@@ -16,6 +16,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
   const [showDynamicBoosting, setShowDynamicBoosting] = useState(false);
   const [showAffinityBoosting, setShowAffinityBoosting] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [cacheCleared, setCacheCleared] = useState(false);
   const [widgets, setWidgets] = useState<Array<{ id: number; name: string; strategy: string }>>([]);
   const [fetchingWidgets, setFetchingWidgets] = useState(false);
   const [widgetFetchError, setWidgetFetchError] = useState<string | null>(null);
@@ -569,6 +570,17 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                 className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
               >
                 <Save size={16} /> Save
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  clearQueryCache();
+                  setCacheCleared(true);
+                  setTimeout(() => setCacheCleared(false), 2000);
+                }}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100"
+              >
+                <RefreshCcw size={16} /> {cacheCleared ? 'Cache Cleared ✓' : 'Clear Cache'}
               </button>
               <button
                 type="button"

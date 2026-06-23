@@ -9,6 +9,17 @@ export interface DynamicBoostingFactor {
   weight: number;
 }
 
+export interface SearchFilter {
+  field: string;
+  values?: string[];
+  min?: number;
+  max?: number;
+}
+
+export interface QueryBoostRule extends DynamicBoostingFactor {
+  query: string;
+}
+
 export interface DYConfig {
   sectionId: string;
   feedId: string;
@@ -53,6 +64,8 @@ export interface DYConfig {
     price: string[];
     brand: string;
   };
+  searchFilters?: SearchFilter[];
+  queryBoostRules?: QueryBoostRule[];
 }
 
 const defaultConfig: DYConfig = {
@@ -99,6 +112,8 @@ const defaultConfig: DYConfig = {
   useAffinityBoosting: false,
   affinityBoostWeight: 80,
   affinityProfileJson: '{\n  "categories": {\n    "Men": 100\n  }\n}',
+  searchFilters: [],
+  queryBoostRules: [],
   mapping: {
     title: ['name', 'productName'],
     image: ['image_url', 'image_url_small', 'imageUrl'],
@@ -113,10 +128,15 @@ const ConfigContext = createContext<{
   setConfig: (c: DYConfig) => void;
   lastRequestPayload: any;
   setLastRequestPayload: (p: any) => void;
+  syncFiltersFromBenchmark: (filters: SearchFilter[]) => void;
+  syncBoostRulesFromBenchmark: (rules: QueryBoostRule[]) => void;
+  clearQueryCache: () => void;
+  cacheInvalidationKey: number;
 } | null>(null);
 
 export const ConfigProvider = ({ children }: { children: React.ReactNode }) => {
   const [lastRequestPayload, setLastRequestPayload] = useState<any>(null);
+  const [cacheInvalidationKey, setCacheInvalidationKey] = useState(0);
   const [config, setConfig] = useState<DYConfig>(() => {
     const saved = localStorage.getItem('dy_sinsay_config');
     try {
@@ -150,8 +170,40 @@ export const ConfigProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('dy_sinsay_config', JSON.stringify(config));
   }, [config]);
 
+  const syncFiltersFromBenchmark = (filters: SearchFilter[]) => {
+    setConfig(prev => ({
+      ...prev,
+      searchFilters: filters,
+    }));
+    setCacheInvalidationKey(k => k + 1);
+  };
+
+  const syncBoostRulesFromBenchmark = (rules: QueryBoostRule[]) => {
+    setConfig(prev => ({
+      ...prev,
+      queryBoostRules: rules,
+    }));
+    setCacheInvalidationKey(k => k + 1);
+  };
+
+  const clearQueryCache = () => {
+    // Signal React Query to invalidate all queries
+    setCacheInvalidationKey(k => k + 1);
+    // Also clear the displayed payload
+    setLastRequestPayload(null);
+  };
+
   return (
-    <ConfigContext.Provider value={{ config, setConfig, lastRequestPayload, setLastRequestPayload }}>
+    <ConfigContext.Provider value={{ 
+      config, 
+      setConfig, 
+      lastRequestPayload, 
+      setLastRequestPayload,
+      syncFiltersFromBenchmark,
+      syncBoostRulesFromBenchmark,
+      clearQueryCache,
+      cacheInvalidationKey,
+    }}>
       {children}
     </ConfigContext.Provider>
   );
