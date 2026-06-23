@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import type { DYConfig } from '../context/ConfigContext';
+=======
+import type { DYConfig, DynamicBoostingFactor } from '../context/ConfigContext';
+>>>>>>> 16366d4 (boosting table in benchmarks tab)
 
 export interface BenchmarkConfigItem {
   name: string;
@@ -15,6 +19,13 @@ export interface AffinityProfileEntry {
   profile: Record<string, unknown>;
 }
 
+<<<<<<< HEAD
+=======
+export interface QueryBoostRule extends DynamicBoostingFactor {
+  query: string;
+}
+
+>>>>>>> 16366d4 (boosting table in benchmarks tab)
 export type QuerySpec =
   | string
   | {
@@ -26,6 +37,10 @@ export type QuerySpec =
 export interface BenchmarkSpec {
   queries: QuerySpec[];
   configurations: BenchmarkConfigItem[];
+<<<<<<< HEAD
+=======
+  queryBoostRules?: QueryBoostRule[];
+>>>>>>> 16366d4 (boosting table in benchmarks tab)
   /** Number of products to show per cell in the report */
   itemsToShow?: number;
 }
@@ -71,6 +86,69 @@ interface ExpandedRow {
   affinityProfile?: Record<string, unknown>;
 }
 
+<<<<<<< HEAD
+=======
+function clampWeight(value: number) {
+  return Math.max(-100, Math.min(100, value));
+}
+
+function buildDynamicPriorityFactors(
+  factors: DynamicBoostingFactor[],
+  prefix: string,
+): Array<{ name: string; rule: Record<string, unknown>; weight: number }> {
+  return factors
+    .filter((factor) => factor.field?.trim() && factor.value?.trim())
+    .map((factor, index) => ({
+      name: `${prefix}_${index}`,
+      rule: {
+        contextTrigger: null,
+        name: `${prefix}_${index}`,
+        productsFilter: {
+          items: [],
+          query: {
+            conditions: [
+              {
+                arguments: [
+                  {
+                    action: factor.matchType,
+                    value: factor.value,
+                  },
+                ],
+                field: factor.field,
+              },
+            ],
+          },
+          type: 'dynamic',
+        },
+      },
+      weight: clampWeight(Number(factor.weight) || 0),
+    }));
+}
+
+function parseAffinityProfile(config: DYConfig): Record<string, unknown> {
+  if (!config.useAffinityBoosting || !config.affinityProfileJson.trim()) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(config.affinityProfileJson);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed;
+    }
+  } catch {
+    return {};
+  }
+
+  return {};
+}
+
+function getQueryBoostRules(spec: BenchmarkSpec, query: string): DynamicBoostingFactor[] {
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+
+  return (spec.queryBoostRules || []).filter((rule) => rule.query.trim().toLocaleLowerCase() === normalizedQuery);
+}
+
+>>>>>>> 16366d4 (boosting table in benchmarks tab)
 function expandQueries(queries: QuerySpec[]): ExpandedRow[] {
   const rows: ExpandedRow[] = [];
   for (const q of queries) {
@@ -92,13 +170,39 @@ function expandQueries(queries: QuerySpec[]): ExpandedRow[] {
   return rows;
 }
 
+<<<<<<< HEAD
 function buildPayload(config: DYConfig, query: string, affinityProfile?: Record<string, unknown>) {
+=======
+function buildPayload(
+  config: DYConfig,
+  query: string,
+  queryBoostFactors: DynamicBoostingFactor[] = [],
+  affinityProfileOverride?: Record<string, unknown>,
+) {
+>>>>>>> 16366d4 (boosting table in benchmarks tab)
   const fId = isNaN(Number(config.feedId)) ? config.feedId : Number(config.feedId);
   const isEu = config.sectionId?.startsWith('98');
   const region = isEu ? 'EU' : 'US';
 
+<<<<<<< HEAD
   const hasProfile = affinityProfile && Object.keys(affinityProfile).length > 0;
   const clampWeight = (v: number) => Math.max(-100, Math.min(100, v));
+=======
+  const affinityProfile = affinityProfileOverride && Object.keys(affinityProfileOverride).length > 0
+    ? affinityProfileOverride
+    : parseAffinityProfile(config);
+  const dynamicPriorityFactors = buildDynamicPriorityFactors(
+    [
+      ...(config.useDynamicBoosting ? config.dynamicBoostingFactors || [] : []),
+      ...queryBoostFactors,
+    ],
+    'filter',
+  );
+  const affinityPriorityFactors = Object.keys(affinityProfile).length > 0
+    ? [{ name: 'USER_AFFINITIES_V2', weight: clampWeight(Number(config.affinityBoostWeight) || 80) }]
+    : [];
+  const priorityFactors = [...dynamicPriorityFactors, ...affinityPriorityFactors];
+>>>>>>> 16366d4 (boosting table in benchmarks tab)
 
   const searchObj: Record<string, unknown> = {
     text: query || '*',
@@ -112,6 +216,7 @@ function buildPayload(config: DYConfig, query: string, affinityProfile?: Record<
     text_knn_threshold: config.textKnnThreshold,
     k: config.k,
     num_candidates: config.numCandidates,
+<<<<<<< HEAD
     // Mirror exactly how useDYSearch sends affinity: profile data + USER_AFFINITIES_V2 priority factor
     ...(hasProfile ? {
       affinityProfile,
@@ -119,6 +224,10 @@ function buildPayload(config: DYConfig, query: string, affinityProfile?: Record<
         { name: 'USER_AFFINITIES_V2', weight: clampWeight(Number(config.affinityBoostWeight) || 80) },
       ],
     } : {}),
+=======
+    ...(priorityFactors.length > 0 ? { priorityFactors } : {}),
+    ...(Object.keys(affinityProfile).length > 0 ? { affinityProfile } : {}),
+>>>>>>> 16366d4 (boosting table in benchmarks tab)
   };
 
   if (config.useSearchFormula && config.searchFormula) {
@@ -211,7 +320,11 @@ export async function runBenchmark(
       const label = `"${row.rowKey}" — ${configItem.name}`;
       onProgress(completed, total, label);
 
+<<<<<<< HEAD
       const payload = buildPayload(mergedConfig, row.text, row.affinityProfile);
+=======
+      const payload = buildPayload(mergedConfig, row.text, getQueryBoostRules(spec, row.text), row.affinityProfile);
+>>>>>>> 16366d4 (boosting table in benchmarks tab)
       const start = performance.now();
       let statusCode: number | null = null;
       let cell: BenchmarkCell;
