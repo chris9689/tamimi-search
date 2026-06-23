@@ -1,7 +1,7 @@
-import { useState, useState as useLocalState } from 'react';
+import { useRef, useState, useState as useLocalState } from 'react';
 import { useConfig, DYConfig, DynamicBoostingFactor } from '../context/ConfigContext';
 import { useRequestLog, RequestLogEntry } from '../context/RequestLogContext';
-import { X, Terminal, Settings, Save, Database, RefreshCw, Globe, Cpu, Search, Layout, Codepen, Copy, Check, ImagePlus, ChevronDown, Plus, Trash2, Key, Eye, EyeOff, RefreshCcw, Wifi } from 'lucide-react';
+import { X, Terminal, Settings, Save, Database, RefreshCw, Globe, Cpu, Search, Layout, Codepen, Copy, Check, ImagePlus, ChevronDown, Plus, Trash2, Key, Eye, EyeOff, RefreshCcw, Wifi, Upload, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const inputClassName = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder:text-gray-400';
@@ -17,9 +17,11 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
   const [showAffinityBoosting, setShowAffinityBoosting] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [cacheCleared, setCacheCleared] = useState(false);
+  const [settingsStatus, setSettingsStatus] = useState<string | null>(null);
   const [widgets, setWidgets] = useState<Array<{ id: number; name: string; strategy: string }>>([]);
   const [fetchingWidgets, setFetchingWidgets] = useState(false);
   const [widgetFetchError, setWidgetFetchError] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const fetchWidgets = async () => {
     if (!localConfig.sectionId) {
@@ -62,6 +64,73 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
       navigator.clipboard.writeText(JSON.stringify(lastRequestPayload, null, 2));
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleExportSettings = () => {
+    const payload = {
+      ...localConfig,
+      _meta: {
+        exportedAt: new Date().toISOString(),
+        source: 'lpp-search',
+        version: 1,
+      },
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    anchor.href = url;
+    anchor.download = `dy-settings-${stamp}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+
+    setSettingsStatus('Settings exported');
+    setTimeout(() => setSettingsStatus(null), 2500);
+  };
+
+  const handleImportSettings = async (file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as Partial<DYConfig> & { _meta?: unknown };
+
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error('Invalid JSON file');
+      }
+
+      const merged: DYConfig = {
+        ...localConfig,
+        ...(parsed as Partial<DYConfig>),
+        mapping: {
+          ...localConfig.mapping,
+          ...(parsed.mapping || {}),
+        },
+        dynamicBoostingFactors: Array.isArray(parsed.dynamicBoostingFactors)
+          ? parsed.dynamicBoostingFactors
+          : localConfig.dynamicBoostingFactors,
+        searchFilters: Array.isArray(parsed.searchFilters)
+          ? parsed.searchFilters
+          : localConfig.searchFilters,
+        queryBoostRules: Array.isArray(parsed.queryBoostRules)
+          ? parsed.queryBoostRules
+          : localConfig.queryBoostRules,
+      };
+
+      setLocalConfig(merged);
+      setConfig(merged);
+      clearQueryCache();
+      setSettingsStatus('Settings imported and applied');
+      setTimeout(() => setSettingsStatus(null), 3000);
+    } catch (error) {
+      setSettingsStatus(error instanceof Error ? `Import failed: ${error.message}` : 'Import failed');
+      setTimeout(() => setSettingsStatus(null), 3500);
     }
   };
 
@@ -563,6 +632,37 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
 
         {activeTab === 'config' && (
           <div className="shrink-0 border-t border-gray-200 bg-white px-6 py-4">
+            {settingsStatus && (
+              <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-medium text-blue-700">
+                {settingsStatus}
+              </div>
+            )}
+            <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={handleExportSettings}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50"
+              >
+                <Download size={16} /> Export JSON
+              </button>
+              <button
+                type="button"
+                onClick={() => importInputRef.current?.click()}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50"
+              >
+                <Upload size={16} /> Import JSON
+              </button>
+              <input
+                ref={importInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(e) => {
+                  handleImportSettings(e.target.files?.[0] ?? null);
+                  e.currentTarget.value = '';
+                }}
+              />
+            </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
