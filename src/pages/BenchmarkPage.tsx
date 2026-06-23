@@ -530,14 +530,10 @@ export const BenchmarkPage: React.FC = () => {
   const handleSyncFilters = useCallback(() => {
     try {
       const parsed = normalizeSpecShape(JSON.parse(specJson) as BenchmarkSpec);
-      if (parsed.searchFilters && parsed.searchFilters.length > 0) {
-        syncFiltersFromBenchmark(parsed.searchFilters);
-        setSyncMessage('Filters synced to main search ✓');
-        setTimeout(() => setSyncMessage(null), 3000);
-      } else {
-        setSyncMessage('No filters to sync');
-        setTimeout(() => setSyncMessage(null), 2000);
-      }
+      const filters = parsed.searchFilters || [];
+      syncFiltersFromBenchmark(filters);
+      setSyncMessage(filters.length > 0 ? 'Filters synced to main search ✓' : 'Filters cleared from main search ✓');
+      setTimeout(() => setSyncMessage(null), 3000);
     } catch (err) {
       setSyncMessage('Error: Invalid spec');
       setTimeout(() => setSyncMessage(null), 2000);
@@ -547,14 +543,10 @@ export const BenchmarkPage: React.FC = () => {
   const handleSyncBoostRules = useCallback(() => {
     try {
       const parsed = normalizeSpecShape(JSON.parse(specJson) as BenchmarkSpec);
-      if (parsed.queryBoostRules && parsed.queryBoostRules.length > 0) {
-        syncBoostRulesFromBenchmark(parsed.queryBoostRules);
-        setSyncMessage('Boost rules synced to main search ✓');
-        setTimeout(() => setSyncMessage(null), 3000);
-      } else {
-        setSyncMessage('No boost rules to sync');
-        setTimeout(() => setSyncMessage(null), 2000);
-      }
+      const rules = parsed.queryBoostRules || [];
+      syncBoostRulesFromBenchmark(rules);
+      setSyncMessage(rules.length > 0 ? 'Boost rules synced to main search ✓' : 'Boost rules cleared from main search ✓');
+      setTimeout(() => setSyncMessage(null), 3000);
     } catch (err) {
       setSyncMessage('Error: Invalid spec');
       setTimeout(() => setSyncMessage(null), 2000);
