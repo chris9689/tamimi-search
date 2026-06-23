@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 
 const inputClassName = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder:text-gray-400';
 const codeBlockClassName = 'rounded-xl border border-gray-800 bg-gray-900 text-gray-100';
+const BENCHMARK_STORAGE_KEY = 'dy_benchmark_spec';
 
 export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
   const { config, setConfig, lastRequestPayload, clearQueryCache } = useConfig();
@@ -22,6 +23,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
   const [fetchingWidgets, setFetchingWidgets] = useState(false);
   const [widgetFetchError, setWidgetFetchError] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
+  const importAllInputRef = useRef<HTMLInputElement | null>(null);
 
   const fetchWidgets = async () => {
     if (!localConfig.sectionId) {
@@ -92,6 +94,30 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
     setTimeout(() => setSettingsStatus(null), 2500);
   };
 
+  const applyImportedConfig = (parsed: Partial<DYConfig>) => {
+    const merged: DYConfig = {
+      ...localConfig,
+      ...parsed,
+      mapping: {
+        ...localConfig.mapping,
+        ...(parsed.mapping || {}),
+      },
+      dynamicBoostingFactors: Array.isArray(parsed.dynamicBoostingFactors)
+        ? parsed.dynamicBoostingFactors
+        : localConfig.dynamicBoostingFactors,
+      searchFilters: Array.isArray(parsed.searchFilters)
+        ? parsed.searchFilters
+        : localConfig.searchFilters,
+      queryBoostRules: Array.isArray(parsed.queryBoostRules)
+        ? parsed.queryBoostRules
+        : localConfig.queryBoostRules,
+    };
+
+    setLocalConfig(merged);
+    setConfig(merged);
+    clearQueryCache();
+  };
+
   const handleImportSettings = async (file: File | null) => {
     if (!file) {
       return;
@@ -105,28 +131,79 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
         throw new Error('Invalid JSON file');
       }
 
-      const merged: DYConfig = {
-        ...localConfig,
-        ...(parsed as Partial<DYConfig>),
-        mapping: {
-          ...localConfig.mapping,
-          ...(parsed.mapping || {}),
-        },
-        dynamicBoostingFactors: Array.isArray(parsed.dynamicBoostingFactors)
-          ? parsed.dynamicBoostingFactors
-          : localConfig.dynamicBoostingFactors,
-        searchFilters: Array.isArray(parsed.searchFilters)
-          ? parsed.searchFilters
-          : localConfig.searchFilters,
-        queryBoostRules: Array.isArray(parsed.queryBoostRules)
-          ? parsed.queryBoostRules
-          : localConfig.queryBoostRules,
+      applyImportedConfig(parsed);
+      setSettingsStatus('Settings imported and applied');
+      setTimeout(() => setSettingsStatus(null), 3000);
+    } catch (error) {
+      setSettingsStatus(error instanceof Error ? `Import failed: ${error.message}` : 'Import failed');
+      setTimeout(() => setSettingsStatus(null), 3500);
+    }
+  };
+
+  const handleExportAllPreset = () => {
+    let benchmarkSpec: unknown = null;
+    const rawBenchmark = localStorage.getItem(BENCHMARK_STORAGE_KEY);
+    if (rawBenchmark) {
+      try {
+        benchmarkSpec = JSON.parse(rawBenchmark);
+      } catch {
+        benchmarkSpec = null;
+      }
+    }
+
+    const payload = {
+      _meta: {
+        exportedAt: new Date().toISOString(),
+        source: 'lpp-search',
+        version: 1,
+        type: 'all-preset',
+      },
+      appConfig: localConfig,
+      benchmarkSpec,
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    anchor.href = url;
+    anchor.download = `dy-all-preset-${stamp}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+
+    setSettingsStatus('All preset exported');
+    setTimeout(() => setSettingsStatus(null), 2500);
+  };
+
+  const handleImportAllPreset = async (file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as {
+        appConfig?: Partial<DYConfig>;
+        benchmarkSpec?: unknown;
       };
 
-      setLocalConfig(merged);
-      setConfig(merged);
-      clearQueryCache();
-      setSettingsStatus('Settings imported and applied');
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error('Invalid JSON file');
+      }
+
+      if (!parsed.appConfig || typeof parsed.appConfig !== 'object') {
+        throw new Error('Missing "appConfig" object');
+      }
+
+      applyImportedConfig(parsed.appConfig);
+
+      if (parsed.benchmarkSpec && typeof parsed.benchmarkSpec === 'object') {
+        localStorage.setItem(BENCHMARK_STORAGE_KEY, JSON.stringify(parsed.benchmarkSpec, null, 2));
+      }
+
+      setSettingsStatus('All preset imported and applied');
       setTimeout(() => setSettingsStatus(null), 3000);
     } catch (error) {
       setSettingsStatus(error instanceof Error ? `Import failed: ${error.message}` : 'Import failed');
@@ -638,6 +715,31 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
               </div>
             )}
             <div className="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={handleExportAllPreset}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+              >
+                <Download size={16} /> Export All Preset
+              </button>
+              <button
+                type="button"
+                onClick={() => importAllInputRef.current?.click()}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+              >
+                <Upload size={16} /> Import All Preset
+              </button>
+              <input
+                ref={importAllInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(e) => {
+                  handleImportAllPreset(e.target.files?.[0] ?? null);
+                  e.currentTarget.value = '';
+                }}
+              />
+
               <button
                 type="button"
                 onClick={handleExportSettings}

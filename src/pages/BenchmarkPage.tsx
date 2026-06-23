@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef } from 'react';
 import { useConfig } from '../context/ConfigContext';
 import { runBenchmark, type BenchmarkRun, type BenchmarkSpec, type QueryBoostRule } from '../utils/benchmarkRunner';
 import { downloadReport } from '../utils/benchmarkReport';
-import { Download, Play, AlertCircle, ChevronDown, ChevronUp, ArrowLeft, Plus, Trash2, Copy } from 'lucide-react';
+import { Download, Play, AlertCircle, ChevronDown, ChevronUp, ArrowLeft, Plus, Trash2, Copy, Upload } from 'lucide-react';
 
 // ─── Default config stored in localStorage ───────────────────────────────────
 
@@ -461,6 +461,7 @@ export const BenchmarkPage: React.FC = () => {
   const [result, setResult] = useState<BenchmarkRun | null>(null);
   const [expandedConfigs, setExpandedConfigs] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const importRulesInputRef = useRef<HTMLInputElement | null>(null);
   const abortRef = useRef(false);
 
   // Persist JSON edits to localStorage
@@ -560,6 +561,82 @@ export const BenchmarkPage: React.FC = () => {
     }
   }, [specJson, syncBoostRulesFromBenchmark]);
 
+  const handleExportActiveTabRules = useCallback(() => {
+    try {
+      const parsed = normalizeSpecShape(JSON.parse(specJson) as BenchmarkSpec);
+      const payload = activeTab === 'boosts'
+        ? { queryBoostRules: parsed.queryBoostRules || [] }
+        : { searchFilters: parsed.searchFilters || [] };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      link.href = url;
+      link.download = `benchmark-${activeTab}-${stamp}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setSyncMessage(`${activeTab === 'boosts' ? 'Boost rules' : 'Search filters'} exported`);
+      setTimeout(() => setSyncMessage(null), 2500);
+    } catch {
+      setSyncMessage('Error: Invalid benchmark JSON');
+      setTimeout(() => setSyncMessage(null), 2500);
+    }
+  }, [specJson, activeTab]);
+
+  const handleImportActiveTabRules = useCallback(async (file: File | null) => {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const parsedFile = JSON.parse(text) as Record<string, unknown> | unknown[];
+
+      if (activeTab === 'boosts') {
+        const importedRules = Array.isArray(parsedFile)
+          ? parsedFile
+          : Array.isArray((parsedFile as Record<string, unknown>)?.queryBoostRules)
+            ? (parsedFile as Record<string, unknown>).queryBoostRules as unknown[]
+            : null;
+
+        if (!importedRules) {
+          throw new Error('Expected JSON array or { queryBoostRules: [] }');
+        }
+
+        updateSpec((spec) => ({
+          ...spec,
+          queryBoostRules: importedRules as QueryBoostRule[],
+        }));
+      } else if (activeTab === 'filters') {
+        const importedFilters = Array.isArray(parsedFile)
+          ? parsedFile
+          : Array.isArray((parsedFile as Record<string, unknown>)?.searchFilters)
+            ? (parsedFile as Record<string, unknown>).searchFilters as unknown[]
+            : null;
+
+        if (!importedFilters) {
+          throw new Error('Expected JSON array or { searchFilters: [] }');
+        }
+
+        updateSpec((spec) => ({
+          ...spec,
+          searchFilters: importedFilters as Array<{ field: string; values?: string[]; min?: number; max?: number }>,
+        }));
+      }
+
+      setSyncMessage(`${activeTab === 'boosts' ? 'Boost rules' : 'Search filters'} imported`);
+      setTimeout(() => setSyncMessage(null), 2500);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Invalid import JSON';
+      setSyncMessage(`Import failed: ${message}`);
+      setTimeout(() => setSyncMessage(null), 3000);
+    }
+  }, [activeTab, updateSpec]);
+
   let parsedSpec: BenchmarkSpec | null = null;
   try {
     parsedSpec = normalizeSpecShape(JSON.parse(specJson) as BenchmarkSpec);
@@ -619,21 +696,48 @@ export const BenchmarkPage: React.FC = () => {
               <TabButton label="Query Boosting" active={activeTab === 'boosts'} onClick={() => setActiveTab('boosts')} />
               <TabButton label="Search Filters" active={activeTab === 'filters'} onClick={() => setActiveTab('filters')} />
             </div>
-            {activeTab === 'boosts' && (
-              <button
-                onClick={handleSyncBoostRules}
-                className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 text-[11px] font-bold uppercase tracking-widest border border-blue-200 hover:bg-blue-100 transition-colors rounded-sm"
-              >
-                <Copy size={12} /> Sync to Main
-              </button>
-            )}
-            {activeTab === 'filters' && (
-              <button
-                onClick={handleSyncFilters}
-                className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 text-[11px] font-bold uppercase tracking-widest border border-blue-200 hover:bg-blue-100 transition-colors rounded-sm"
-              >
-                <Copy size={12} /> Sync to Main
-              </button>
+            {(activeTab === 'boosts' || activeTab === 'filters') && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleExportActiveTabRules}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 text-gray-700 text-[11px] font-bold uppercase tracking-widest border border-gray-200 hover:bg-gray-100 transition-colors rounded-sm"
+                >
+                  <Download size={12} /> Export JSON
+                </button>
+                <button
+                  onClick={() => importRulesInputRef.current?.click()}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 text-gray-700 text-[11px] font-bold uppercase tracking-widest border border-gray-200 hover:bg-gray-100 transition-colors rounded-sm"
+                >
+                  <Upload size={12} /> Import JSON
+                </button>
+                <input
+                  ref={importRulesInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={(e) => {
+                    handleImportActiveTabRules(e.target.files?.[0] ?? null);
+                    e.currentTarget.value = '';
+                  }}
+                />
+
+                {activeTab === 'boosts' && (
+                  <button
+                    onClick={handleSyncBoostRules}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 text-[11px] font-bold uppercase tracking-widest border border-blue-200 hover:bg-blue-100 transition-colors rounded-sm"
+                  >
+                    <Copy size={12} /> Sync to Main
+                  </button>
+                )}
+                {activeTab === 'filters' && (
+                  <button
+                    onClick={handleSyncFilters}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 text-[11px] font-bold uppercase tracking-widest border border-blue-200 hover:bg-blue-100 transition-colors rounded-sm"
+                  >
+                    <Copy size={12} /> Sync to Main
+                  </button>
+                )}
+              </div>
             )}
           </div>
           {syncMessage && (
