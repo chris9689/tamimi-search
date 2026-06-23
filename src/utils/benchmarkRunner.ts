@@ -97,8 +97,8 @@ function buildPayload(config: DYConfig, query: string, affinityProfile?: Record<
   const isEu = config.sectionId?.startsWith('98');
   const region = isEu ? 'EU' : 'US';
 
-  const effectiveProfile =
-    affinityProfile && Object.keys(affinityProfile).length > 0 ? affinityProfile : null;
+  const hasProfile = affinityProfile && Object.keys(affinityProfile).length > 0;
+  const clampWeight = (v: number) => Math.max(-100, Math.min(100, v));
 
   const searchObj: Record<string, unknown> = {
     text: query || '*',
@@ -112,7 +112,13 @@ function buildPayload(config: DYConfig, query: string, affinityProfile?: Record<
     text_knn_threshold: config.textKnnThreshold,
     k: config.k,
     num_candidates: config.numCandidates,
-    ...(effectiveProfile ? { affinityProfile: effectiveProfile } : {}),
+    // Mirror exactly how useDYSearch sends affinity: profile data + USER_AFFINITIES_V2 priority factor
+    ...(hasProfile ? {
+      affinityProfile,
+      priorityFactors: [
+        { name: 'USER_AFFINITIES_V2', weight: clampWeight(Number(config.affinityBoostWeight) || 80) },
+      ],
+    } : {}),
   };
 
   if (config.useSearchFormula && config.searchFormula) {
