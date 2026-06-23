@@ -155,11 +155,6 @@ function statusClass(code: number | null): string {
 
 // ─── Components: QueryBoostingTab & SearchFiltersTab ─────────────────────────
 
-const EMPTY_FILTER: { field: string; values?: string[]; min?: number; max?: number } = {
-  field: '',
-  values: [],
-};
-
 const SearchFiltersTab: React.FC<{
   parsedSpec: BenchmarkSpec | null;
   onChange: (updater: (spec: BenchmarkSpec) => BenchmarkSpec) => void;
@@ -184,7 +179,7 @@ const SearchFiltersTab: React.FC<{
       searchFilters: (spec.searchFilters || []).map((filter, filterIndex) => {
         if (filterIndex !== index) return filter;
         if (field === 'field') {
-          return { ...filter, [field]: value };
+          return { ...filter, field: value as string };
         } else if (field === 'values') {
           return { ...filter, values: (value as string[]) || [] };
         } else if (field === 'min' || field === 'max') {
