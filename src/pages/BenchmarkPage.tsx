@@ -442,7 +442,7 @@ const QueryBoostingTab: React.FC<{
               </tr>
             ) : (
               boostRules.map((rule, index) => (
-                <tr key={`${rule.query}-${rule.field}-${index}`}>
+                <tr key={index}>
                   <td className="px-3 py-2 border-b border-r border-gray-100">
                     <input
                       value={rule.query}
