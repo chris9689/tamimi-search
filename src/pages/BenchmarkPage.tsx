@@ -190,6 +190,11 @@ export const BenchmarkPage: React.FC = () => {
       setJsonError(err instanceof Error ? err.message : 'Invalid JSON');
     }
   }, [specJson]);
+
+  const handleRun = useCallback(async () => {
+    let spec: BenchmarkSpec;
+    try {
+      spec = normalizeSpecShape(JSON.parse(specJson) as BenchmarkSpec);
     } catch (err) {
       setJsonError(err instanceof Error ? err.message : 'Invalid JSON');
       return;
