@@ -506,7 +506,6 @@ const QueryBoostingTab: React.FC<{
   );
 };
 
->>>>>>> 16366d4 (boosting table in benchmarks tab)
 const BenchmarkResults: React.FC<{ run: BenchmarkRun }> = ({ run }) => {
   const { spec, cells, rowKeys } = run;
 
