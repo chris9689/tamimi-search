@@ -1,14 +1,8 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useConfig } from '../context/ConfigContext';
-<<<<<<< HEAD
-import { runBenchmark, type BenchmarkRun, type BenchmarkSpec } from '../utils/benchmarkRunner';
-import { downloadReport } from '../utils/benchmarkReport';
-import { Download, Play, AlertCircle, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
-=======
 import { runBenchmark, type BenchmarkRun, type BenchmarkSpec, type QueryBoostRule } from '../utils/benchmarkRunner';
 import { downloadReport } from '../utils/benchmarkReport';
 import { Download, Play, AlertCircle, ChevronDown, ChevronUp, ArrowLeft, Plus, Trash2 } from 'lucide-react';
->>>>>>> 16366d4 (boosting table in benchmarks tab)
 
 // ─── Default config stored in localStorage ───────────────────────────────────
 
@@ -49,8 +43,6 @@ const DEFAULT_SPEC: BenchmarkSpec = {
       ],
     },
   ],
-<<<<<<< HEAD
-=======
   queryBoostRules: [
     {
       query: 'sukienka',
@@ -60,7 +52,6 @@ const DEFAULT_SPEC: BenchmarkSpec = {
       weight: 50,
     },
   ],
->>>>>>> 16366d4 (boosting table in benchmarks tab)
   itemsToShow: 6,
   configurations: [
     {
@@ -139,8 +130,6 @@ function loadSpec(): string {
   }
 }
 
-<<<<<<< HEAD
-=======
 function normalizeSpecShape(spec: BenchmarkSpec): BenchmarkSpec {
   return {
     ...spec,
@@ -148,7 +137,6 @@ function normalizeSpecShape(spec: BenchmarkSpec): BenchmarkSpec {
   };
 }
 
->>>>>>> 16366d4 (boosting table in benchmarks tab)
 // ─── Tiny helpers ─────────────────────────────────────────────────────────────
 
 function timingClass(ms: number): string {
@@ -170,10 +158,7 @@ export const BenchmarkPage: React.FC = () => {
   const { config } = useConfig();
 
   const [specJson, setSpecJson] = useState<string>(loadSpec);
-<<<<<<< HEAD
-=======
   const [activeTab, setActiveTab] = useState<'json' | 'boosts'>('json');
->>>>>>> 16366d4 (boosting table in benchmarks tab)
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState<{ completed: number; total: number; label: string } | null>(null);
@@ -186,11 +171,7 @@ export const BenchmarkPage: React.FC = () => {
     const val = e.target.value;
     setSpecJson(val);
     try {
-<<<<<<< HEAD
-      JSON.parse(val);
-=======
       normalizeSpecShape(JSON.parse(val) as BenchmarkSpec);
->>>>>>> 16366d4 (boosting table in benchmarks tab)
       setJsonError(null);
       localStorage.setItem(STORAGE_KEY, val);
     } catch (err) {
@@ -198,12 +179,6 @@ export const BenchmarkPage: React.FC = () => {
     }
   }, []);
 
-<<<<<<< HEAD
-  const handleRun = useCallback(async () => {
-    let spec: BenchmarkSpec;
-    try {
-      spec = JSON.parse(specJson) as BenchmarkSpec;
-=======
   const updateSpec = useCallback((updater: (spec: BenchmarkSpec) => BenchmarkSpec) => {
     try {
       const nextSpec = normalizeSpecShape(updater(normalizeSpecShape(JSON.parse(specJson) as BenchmarkSpec)));
@@ -215,12 +190,6 @@ export const BenchmarkPage: React.FC = () => {
       setJsonError(err instanceof Error ? err.message : 'Invalid JSON');
     }
   }, [specJson]);
-
-  const handleRun = useCallback(async () => {
-    let spec: BenchmarkSpec;
-    try {
-      spec = normalizeSpecShape(JSON.parse(specJson) as BenchmarkSpec);
->>>>>>> 16366d4 (boosting table in benchmarks tab)
     } catch (err) {
       setJsonError(err instanceof Error ? err.message : 'Invalid JSON');
       return;
@@ -255,8 +224,6 @@ export const BenchmarkPage: React.FC = () => {
     if (result) downloadReport(result);
   }, [result]);
 
-<<<<<<< HEAD
-=======
   let parsedSpec: BenchmarkSpec | null = null;
   try {
     parsedSpec = normalizeSpecShape(JSON.parse(specJson) as BenchmarkSpec);
@@ -264,7 +231,6 @@ export const BenchmarkPage: React.FC = () => {
     parsedSpec = null;
   }
 
->>>>>>> 16366d4 (boosting table in benchmarks tab)
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
@@ -311,18 +277,6 @@ export const BenchmarkPage: React.FC = () => {
             </button>
           </div>
 
-<<<<<<< HEAD
-          <div className="p-5">
-            <textarea
-              value={specJson}
-              onChange={handleJsonChange}
-              spellCheck={false}
-              rows={20}
-              className={`w-full font-mono text-[12px] bg-gray-50 border rounded-sm p-4 outline-none resize-y focus:bg-white transition-colors ${
-                jsonError ? 'border-red-300 focus:border-red-400' : 'border-gray-200 focus:border-black'
-              }`}
-            />
-=======
           <div className="px-5 py-3 border-b border-gray-100 flex items-center gap-2">
             <TabButton label="JSON Editor" active={activeTab === 'json'} onClick={() => setActiveTab('json')} />
             <TabButton label="Query Boosting" active={activeTab === 'boosts'} onClick={() => setActiveTab('boosts')} />
@@ -342,7 +296,6 @@ export const BenchmarkPage: React.FC = () => {
             ) : (
               <QueryBoostingTab parsedSpec={parsedSpec} onChange={updateSpec} />
             )}
->>>>>>> 16366d4 (boosting table in benchmarks tab)
             {jsonError && (
               <div className="mt-2 flex items-start gap-2 text-red-600 text-[11px]">
                 <AlertCircle size={13} className="mt-0.5 shrink-0" />
@@ -393,8 +346,6 @@ export const BenchmarkPage: React.FC = () => {
   );
 };
 
-<<<<<<< HEAD
-=======
 const TabButton: React.FC<{ label: string; active: boolean; onClick: () => void }> = ({ label, active, onClick }) => (
   <button
     onClick={onClick}
