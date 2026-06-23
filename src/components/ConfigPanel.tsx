@@ -22,7 +22,6 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
   const [widgets, setWidgets] = useState<Array<{ id: number; name: string; strategy: string }>>([]);
   const [fetchingWidgets, setFetchingWidgets] = useState(false);
   const [widgetFetchError, setWidgetFetchError] = useState<string | null>(null);
-  const importInputRef = useRef<HTMLInputElement | null>(null);
   const importAllInputRef = useRef<HTMLInputElement | null>(null);
 
   const fetchWidgets = async () => {
@@ -69,31 +68,6 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
-  const handleExportSettings = () => {
-    const payload = {
-      ...localConfig,
-      _meta: {
-        exportedAt: new Date().toISOString(),
-        source: 'lpp-search',
-        version: 1,
-      },
-    };
-
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-    anchor.href = url;
-    anchor.download = `dy-settings-${stamp}.json`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-    URL.revokeObjectURL(url);
-
-    setSettingsStatus('Settings exported');
-    setTimeout(() => setSettingsStatus(null), 2500);
-  };
-
   const applyImportedConfig = (parsed: Partial<DYConfig>) => {
     const merged: DYConfig = {
       ...localConfig,
@@ -116,28 +90,6 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
     setLocalConfig(merged);
     setConfig(merged);
     clearQueryCache();
-  };
-
-  const handleImportSettings = async (file: File | null) => {
-    if (!file) {
-      return;
-    }
-
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text) as Partial<DYConfig> & { _meta?: unknown };
-
-      if (!parsed || typeof parsed !== 'object') {
-        throw new Error('Invalid JSON file');
-      }
-
-      applyImportedConfig(parsed);
-      setSettingsStatus('Settings imported and applied');
-      setTimeout(() => setSettingsStatus(null), 3000);
-    } catch (error) {
-      setSettingsStatus(error instanceof Error ? `Import failed: ${error.message}` : 'Import failed');
-      setTimeout(() => setSettingsStatus(null), 3500);
-    }
   };
 
   const handleExportAllPreset = () => {
@@ -740,30 +692,6 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                 }}
               />
 
-              <button
-                type="button"
-                onClick={handleExportSettings}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50"
-              >
-                <Download size={16} /> Export JSON
-              </button>
-              <button
-                type="button"
-                onClick={() => importInputRef.current?.click()}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50"
-              >
-                <Upload size={16} /> Import JSON
-              </button>
-              <input
-                ref={importInputRef}
-                type="file"
-                accept="application/json,.json"
-                className="hidden"
-                onChange={(e) => {
-                  handleImportSettings(e.target.files?.[0] ?? null);
-                  e.currentTarget.value = '';
-                }}
-              />
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
