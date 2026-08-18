@@ -75,6 +75,11 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
           })
           .filter(Boolean);
 
+        const pageData = (config.standardPageData || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+
         const standardPayload = {
           user: { active_consent_accepted: true },
           query: {
@@ -87,6 +92,7 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
             page: {
               type: config.ctxType || 'HOMEPAGE',
               location: typeof window !== 'undefined' ? window.location.href : 'https://www.mypage.com',
+              data: pageData,
             },
           },
           selector: { name: 'Semantic Search' },
@@ -107,6 +113,7 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
             offset,
             pageType: standardPayload.context.page.type,
             location: standardPayload.context.page.location,
+            pageData,
             filters: combinedFilters,
             ...(config.sortByEnabled ? { sortBy: { field: 'popularity', order: 'asc' } } : {}),
             activeConsentAccepted: true,

@@ -369,6 +369,13 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                       <ConfigField label="Page Type" value={localConfig.ctxType} onChange={(v: string) => updateField('ctxType', v)} description="e.g. HOMEPAGE" />
                     </div>
 
+                    <ConfigField
+                      label="Page Context Data"
+                      value={localConfig.standardPageData}
+                      onChange={(v: string) => updateField('standardPageData', v)}
+                      description="Comma-separated (required)"
+                    />
+
                     <div className="rounded-xl border border-gray-200 bg-white p-4">
                       <Toggle label="Sort by Popularity" checked={localConfig.sortByEnabled} onChange={(v: boolean) => updateField('sortByEnabled', v)} />
                     </div>

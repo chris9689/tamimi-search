@@ -25,6 +25,7 @@ export type ApiMode = 'standard' | 'extended';
 export interface DYConfig {
   apiMode: ApiMode;
   standardApiKey: string;
+  standardPageData: string;
   sectionId: string;
   feedId: string;
   widgetId: string;
@@ -75,6 +76,7 @@ export interface DYConfig {
 const defaultConfig: DYConfig = {
   apiMode: 'extended',
   standardApiKey: '',
+  standardPageData: 'p76311-020',
   sectionId: '8787656',
   feedId: '85470',
   widgetId: '464618',
