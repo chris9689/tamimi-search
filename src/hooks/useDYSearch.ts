@@ -38,6 +38,89 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
     retryDelay: 1000,
     staleTime: 30_000,
     queryFn: async (): Promise<DYSearchResponse> => {
+      const parseResponse = (json: any, isFallback: boolean): DYSearchResponse => {
+        console.log('DY Search Response Data:', json);
+        if (!json.response || !Array.isArray(json.response) || json.response.length === 0) {
+          console.error('DY API: Unexpected response structure', json);
+          throw new Error('Invalid response format: Missing "response" array or empty response.');
+        }
+        const firstResponse = json.response[0];
+        return {
+          totalNumResults: firstResponse.totalNumResults ?? 0,
+          slots: firstResponse.slots || [],
+          facets: firstResponse.facets || {},
+          spellCheckedQuery: firstResponse.spellCheckedQuery || null,
+          translatedQuery: firstResponse.translatedQuery || null,
+          errorMessage: firstResponse.errorMessage || null,
+          isFallback,
+        };
+      };
+
+      // ---- Standard (Experience API) mode ----
+      if (config.apiMode === 'standard') {
+        if (!config.standardApiKey) {
+          throw new Error('Standard API key is required');
+        }
+
+        const combinedFilters = [...(config.searchFilters || []), ...filters]
+          .filter((f) => f && f.field)
+          .map((f) => {
+            if (Array.isArray(f.values) && f.values.length > 0) {
+              return { field: f.field, values: f.values };
+            }
+            if (typeof f.min === 'number' || typeof f.max === 'number') {
+              return { field: f.field, ...(f.min != null ? { min: f.min } : {}), ...(f.max != null ? { max: f.max } : {}) };
+            }
+            return null;
+          })
+          .filter(Boolean);
+
+        const standardPayload = {
+          user: { active_consent_accepted: true },
+          query: {
+            pagination: { numItems: config.itemsPerPage, offset },
+            text: query && query.trim() ? query : '*',
+            ...(combinedFilters.length > 0 ? { filters: combinedFilters } : {}),
+            ...(config.sortByEnabled ? { sortBy: { field: 'popularity', order: 'asc' } } : {}),
+          },
+          context: {
+            page: {
+              type: config.ctxType || 'HOMEPAGE',
+              location: typeof window !== 'undefined' ? window.location.href : 'https://www.mypage.com',
+            },
+          },
+          selector: { name: 'Semantic Search' },
+          options: { returnAnalyticsMetadata: false, isImplicitClientData: false },
+        };
+
+        // Display the exact upstream payload in the Request Inspector
+        setLastRequestPayload(standardPayload);
+
+        const response = await loggedFetch('/api/standard-search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            apiKey: config.standardApiKey,
+            sectionId: config.sectionId,
+            text: standardPayload.query.text,
+            numItems: config.itemsPerPage,
+            offset,
+            pageType: standardPayload.context.page.type,
+            location: standardPayload.context.page.location,
+            filters: combinedFilters,
+            ...(config.sortByEnabled ? { sortBy: { field: 'popularity', order: 'asc' } } : {}),
+            activeConsentAccepted: true,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`DY API Error: ${response.status} - ${errorText}`);
+        }
+
+        return parseResponse(await response.json(), false);
+      }
+
       // If we don't have IDs, return early (though Query will be disabled)
       if (!config.sectionId || !config.feedId) {
         throw new Error('Section ID and Feed ID are required');
@@ -200,24 +283,6 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
         return { json: await response.json() };
       };
 
-      const parseResponse = (json: any, isFallback: boolean): DYSearchResponse => {
-        console.log('DY Search Response Data:', json);
-        if (!json.response || !Array.isArray(json.response) || json.response.length === 0) {
-          console.error('DY API: Unexpected response structure', json);
-          throw new Error('Invalid response format: Missing "response" array or empty response.');
-        }
-        const firstResponse = json.response[0];
-        return {
-          totalNumResults: firstResponse.totalNumResults ?? 0,
-          slots: firstResponse.slots || [],
-          facets: firstResponse.facets || {},
-          spellCheckedQuery: firstResponse.spellCheckedQuery || null,
-          translatedQuery: firstResponse.translatedQuery || null,
-          errorMessage: firstResponse.errorMessage || null,
-          isFallback,
-        };
-      };
-
       const hasAffinityProfile = Object.keys(affinityProfile).length > 0;
 
       // Create clean payload for display (without region/sectionId)
@@ -236,6 +301,8 @@ export const useDYSearch = (query: string, offset: number, filters: any[] = []) 
 
       return primaryResult;
     },
-    enabled: !!config.sectionId && !!config.feedId,
+    enabled: config.apiMode === 'standard'
+      ? !!config.standardApiKey
+      : !!config.sectionId && !!config.feedId,
   });
 };

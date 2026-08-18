@@ -20,7 +20,11 @@ export interface QueryBoostRule extends DynamicBoostingFactor {
   query: string;
 }
 
+export type ApiMode = 'standard' | 'extended';
+
 export interface DYConfig {
+  apiMode: ApiMode;
+  standardApiKey: string;
   sectionId: string;
   feedId: string;
   widgetId: string;
@@ -69,6 +73,8 @@ export interface DYConfig {
 }
 
 const defaultConfig: DYConfig = {
+  apiMode: 'extended',
+  standardApiKey: '',
   sectionId: '8787656',
   feedId: '85470',
   widgetId: '464618',

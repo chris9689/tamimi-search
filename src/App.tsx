@@ -77,7 +77,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Not-configured banner */}
-      {!config.feedId && (
+      {config.apiMode !== 'standard' && !config.feedId && (
         <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex items-center justify-between gap-4">
           <p className="text-amber-800 text-xs font-medium">
             <span className="font-bold">Feed ID not configured.</span> Open settings to enter your Feed ID for section {config.sectionId}.

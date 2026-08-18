@@ -297,6 +297,95 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
           {activeTab === 'config' ? (
             <div className="space-y-8 pb-6">
               <section>
+                <SectionHeader icon={<Cpu size={14} />} title="Search API" />
+                <div className="grid grid-cols-2 gap-2 rounded-xl border border-gray-200 bg-white p-1.5">
+                  <button
+                    type="button"
+                    onClick={() => updateField('apiMode', 'standard')}
+                    className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                      localConfig.apiMode === 'standard'
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Standard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateField('apiMode', 'extended')}
+                    className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                      localConfig.apiMode === 'extended'
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Extended
+                  </button>
+                </div>
+                <p className="mt-2 text-[11px] text-gray-500">
+                  {localConfig.apiMode === 'standard'
+                    ? 'Standard Experience API (dy.dev/reference/search). Sends the dy-api-key header.'
+                    : 'Extended recs-search API with full targeting, boosting & mapping controls.'}
+                </p>
+              </section>
+
+              {localConfig.apiMode === 'standard' ? (
+                <section>
+                  <SectionHeader icon={<Key size={14} />} title="Standard API" />
+                  <div className="space-y-4">
+                    <div>
+                      <div className="mb-1.5 flex items-center justify-between gap-3">
+                        <label className="text-[11px] font-medium text-gray-700">API Key</label>
+                        <span className="text-[11px] text-gray-500">Sent as dy-api-key header</span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type={showApiKey ? 'text' : 'password'}
+                          className={`${inputClassName} pr-10`}
+                          value={localConfig.standardApiKey}
+                          placeholder="Enter DY API Key..."
+                          onChange={e => updateField('standardApiKey', e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowApiKey(v => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-gray-700"
+                          tabIndex={-1}
+                        >
+                          {showApiKey ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <ConfigField
+                      label="Section ID"
+                      value={localConfig.sectionId}
+                      onChange={(v: string) => updateField('sectionId', v)}
+                      description="Region routing (98… = EU)"
+                    />
+
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <ConfigField label="Items Per Page" type="number" value={localConfig.itemsPerPage} onChange={(v: string) => updateField('itemsPerPage', parseInt(v))} />
+                      <ConfigField label="Page Type" value={localConfig.ctxType} onChange={(v: string) => updateField('ctxType', v)} description="e.g. HOMEPAGE" />
+                    </div>
+
+                    <div className="rounded-xl border border-gray-200 bg-white p-4">
+                      <Toggle label="Sort by Popularity" checked={localConfig.sortByEnabled} onChange={(v: boolean) => updateField('sortByEnabled', v)} />
+                    </div>
+
+                    <div>
+                      <ConfigField
+                        label="Logo URL"
+                        value={localConfig.logoUrl}
+                        onChange={(v: string) => updateField('logoUrl', v)}
+                        description="URL or data URI"
+                      />
+                    </div>
+                  </div>
+                </section>
+              ) : (
+              <>
+              <section>
                 <SectionHeader icon={<Key size={14} />} title="API Keys & Branding" />
                 <div className="space-y-4">
                   <div>
@@ -627,6 +716,8 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                   </div>
                 </div>
               </section>
+              </>
+              )}
             </div>
           ) : activeTab === 'payload' ? (
             <div className="space-y-6 pb-6">
