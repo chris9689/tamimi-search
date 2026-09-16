@@ -4,6 +4,21 @@ import { motion } from 'framer-motion';
 import { ScoreInfo } from './ScoreInfoIcon';
 import { useConfig } from '../context/ConfigContext';
 
+// Official new Saudi Riyal symbol, rendered as an inline glyph so it looks right
+// regardless of the active font (Calibri has no Riyal codepoint).
+const RiyalSymbol: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    viewBox="0 0 1124.14 1256.39"
+    className={className}
+    fill="currentColor"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path d="M699.62,1113.02h0c-20.06,44.48-33.32,92.75-38.4,143.37l424.51-90.24c20.06-44.48,33.31-92.75,38.4-143.37l-424.51,90.24Z" />
+    <path d="M1085.73,895.8c20.06-44.48,33.32-92.75,38.4-143.37l-330.68,70.33v-135.2l292.27-62.11c20.06-44.48,33.32-92.75,38.4-143.37l-330.68,70.27V66.13c-50.67,28.45-95.67,66.32-132.25,110.99v403.35l-132.25,28.11V0c-50.67,28.44-95.67,66.32-132.25,110.99v525.69l-295.91,62.88c-20.06,44.48-33.33,92.75-38.42,143.37l334.33-71.05v170.26l-358.3,76.14c-20.06,44.48-33.32,92.75-38.4,143.37l396.7-84.33v135.2l-53.58,11.39c-20.06,44.48-33.32,92.75-38.4,143.37l91.98-19.55v135.2c50.67-28.45,95.67-66.32,132.25-110.99v-104.7l132.25-28.12v135.2c50.67-28.44,95.67-66.32,132.25-110.99v-104.7l111.4-23.69c20.06-44.48,33.32-92.75,38.4-143.37l-149.8,31.86v-135.2l246.32-52.37Z" />
+  </svg>
+);
+
 interface ProductCardProps {
   item: any;
   onVisualSearch?: (imageUrl: string) => void;
@@ -22,6 +37,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ item, onVisualSearch }
   const brand = typeof item.brand === 'string' ? item.brand.trim() : '';
   const secondaryImageUrl = item.image_url_secondary || imageUrl;
   const currency = (config.currency || 'SAR').toUpperCase();
+  const currencyIsSAR = currency === 'SAR' || currency === 'SR';
+
+  // Show the brand emphasised inline with the description (Tamimi live-store pattern).
+  // Strip a leading duplicate so we don't render e.g. "Puck Puck Cream Cheese".
+  const description =
+    brand && title.toLowerCase().startsWith(brand.toLowerCase())
+      ? title.slice(brand.length).replace(/^[\s\-–—,:•]+/, '')
+      : title;
 
   // Discount handling — supports either a fraction (0.3) or a percentage (30)
   const rawPct = Number(item.discount_percentage) || 0;
@@ -74,10 +97,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ item, onVisualSearch }
           </div>
         )}
 
-        {/* Wishlist Button */}
+        {/* Wishlist Button — appears on hover for a clean default state */}
         <button
           onClick={(e) => e.stopPropagation()}
-          className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 hover:bg-white transition-colors"
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 hover:bg-white opacity-0 group-hover:opacity-100 transition-all"
           aria-label="Add to wishlist"
         >
           <Heart size={18} className="text-ink group-hover:text-primary transition-colors drop-shadow-sm" />
@@ -100,31 +123,46 @@ export const ProductCard: React.FC<ProductCardProps> = ({ item, onVisualSearch }
             <Camera size={16} />
           </button>
         )}
+      </div>
 
-        {/* Persistent crimson add button (Tamimi signature) */}
+      {/* Signature crimson add button — centered, straddling the image bottom edge */}
+      <div className="relative flex justify-center">
         <button
           onClick={(e) => e.stopPropagation()}
-          className="absolute bottom-2 right-2 h-9 w-9 rounded-full bg-primary text-white flex items-center justify-center shadow-md hover:bg-primary-dark active:scale-95 transition-all"
+          className="-mt-5 z-10 h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center shadow-md ring-4 ring-white hover:bg-primary-dark active:scale-95 transition-all"
           aria-label="Add to cart"
         >
           <Plus size={18} strokeWidth={2.5} />
         </button>
       </div>
 
-      {/* Info Container */}
-      <div className="mt-3 space-y-1">
-        {brand ? <p className="text-[10px] text-muted uppercase tracking-widest">{brand}</p> : null}
-        <h3 className="text-[13px] font-medium text-ink line-clamp-2 leading-snug min-h-[2.4em]">{title}</h3>
-        <div className="flex items-baseline gap-2 pt-0.5">
-          {originalPrice ? (
-            <>
-              <p className="text-[15px] font-bold text-primary">{price} {currency}</p>
-              <p className="text-[11px] text-gray-400 line-through">{originalPrice.toFixed(2)} {currency}</p>
-            </>
-          ) : (
-            <p className="text-[15px] font-bold text-ink">{price} {currency}</p>
+      {/* Info Container — price first, then brand + description, centered */}
+      <div className="mt-2 text-center px-1">
+        <div className="flex items-center justify-center gap-2">
+          <span className="inline-flex items-center gap-1 text-[15px] font-bold text-ink">
+            {currencyIsSAR
+              ? <RiyalSymbol className="h-[0.8em] w-[0.72em]" />
+              : <span className="text-[0.8em] font-semibold">{currency}</span>}
+            {price}
+          </span>
+          {originalPrice && (
+            <span className="relative inline-flex items-center gap-1 text-[12px] text-gray-400">
+              {currencyIsSAR && <RiyalSymbol className="h-[0.8em] w-[0.72em]" />}
+              {originalPrice.toFixed(2)}
+              <span className="pointer-events-none absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-gray-400" />
+            </span>
           )}
         </div>
+        <h3 className="mt-1.5 text-[13px] leading-snug line-clamp-2 min-h-[2.4em]">
+          {brand && description ? (
+            <>
+              <span className="font-bold text-ink">{brand}</span>{' '}
+              <span className="text-muted">{description}</span>
+            </>
+          ) : (
+            <span className="font-medium text-ink">{brand || title}</span>
+          )}
+        </h3>
       </div>
     </motion.div>
   );

@@ -444,11 +444,12 @@ export default function App() {
 // --- Skeleton Components ---
 
 const SkeletonCard = () => (
-  <div className="animate-pulse">
-    <div className="aspect-square bg-gray-100 rounded-lg mb-4" />
-    <div className="h-2 bg-gray-100 w-1/4 rounded-full mb-2" />
-    <div className="h-3.5 bg-gray-100 w-3/4 rounded-full mb-3" />
-    <div className="h-4 bg-gray-100 w-1/2 rounded-full" />
+  <div className="animate-pulse flex flex-col items-center">
+    <div className="aspect-square w-full bg-gray-100 rounded-lg" />
+    <div className="h-10 w-10 bg-gray-200 rounded-full -mt-5 ring-4 ring-white" />
+    <div className="h-4 bg-gray-100 w-1/3 rounded-full mt-3" />
+    <div className="h-3 bg-gray-100 w-3/4 rounded-full mt-3" />
+    <div className="h-3 bg-gray-100 w-1/2 rounded-full mt-2" />
   </div>
 );
 

@@ -21,8 +21,8 @@
   --color-glass-white: rgba(255, 255, 255, 0.8);
   --color-glass-border: rgba(255, 255, 255, 0.2);
 
-  --font-sans: "Noto Sans", "Noto Sans Arabic", "Segoe UI", system-ui, sans-serif;
-  --font-heading: "Plus Jakarta Sans", "Noto Sans", "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Calibri", "Carlito", "Segoe UI", "Noto Sans Arabic", system-ui, sans-serif;
+  --font-heading: "Calibri", "Carlito", "Segoe UI", "Noto Sans Arabic", system-ui, sans-serif;
 }
 
 @layer base {
