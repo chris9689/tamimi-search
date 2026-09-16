@@ -13,8 +13,8 @@ import debounce from 'lodash/debounce';
 
 export default function App() {
   const { config } = useConfig();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState('rice');
+  const [debouncedSearch, setDebouncedSearch] = useState('rice');
   const [offset, setOffset] = useState(0);
   const [showConfig, setShowConfig] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
