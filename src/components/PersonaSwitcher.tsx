@@ -97,7 +97,7 @@ export const PersonaSwitcher = ({ onOpenSettings }: PersonaSwitcherProps) => {
             <div className="border-t border-gray-100 mt-1 pt-1">
               <button
                 onClick={startAdd}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-gray-500 hover:text-primary hover:bg-primary-container transition-colors"
               >
                 <Plus size={13} /> Add persona
               </button>
@@ -126,7 +126,7 @@ export const PersonaSwitcher = ({ onOpenSettings }: PersonaSwitcherProps) => {
         {/* Settings FAB */}
         <button
           onClick={onOpenSettings}
-          className="w-12 h-12 bg-black text-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-800 active:scale-95 transition-all"
+          className="w-12 h-12 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:bg-primary-dark active:scale-95 transition-all"
           aria-label="Open settings"
           title="Configure Dynamic Yield API"
         >
@@ -160,15 +160,15 @@ const PersonaRow = ({
   onSelect: () => void; onEdit?: () => void; onDelete?: () => void;
 }) => (
   <div
-    className={`flex items-center gap-2 px-2 py-1.5 rounded-xl cursor-pointer group transition-colors ${selected ? 'bg-indigo-50' : 'hover:bg-gray-50'}`}
+    className={`flex items-center gap-2 px-2 py-1.5 rounded-xl cursor-pointer group transition-colors ${selected ? 'bg-primary-container' : 'hover:bg-gray-50'}`}
     onClick={onSelect}
   >
     <span className="text-lg w-7 text-center">{avatar}</span>
     <div className="flex-1 min-w-0">
-      <p className={`text-sm font-medium truncate ${selected ? 'text-indigo-700' : 'text-gray-800'}`}>{label}</p>
+      <p className={`text-sm font-medium truncate ${selected ? 'text-primary' : 'text-gray-800'}`}>{label}</p>
       {sublabel && <p className="text-[10px] text-gray-400 truncate">{sublabel}</p>}
     </div>
-    {selected && <Check size={13} className="text-indigo-500 shrink-0" />}
+    {selected && <Check size={13} className="text-primary shrink-0" />}
     {onEdit && (
       <button
         onClick={e => { e.stopPropagation(); onEdit(); }}
@@ -236,7 +236,7 @@ const PersonaEditModal = ({
               type="text"
               value={persona.avatar}
               onChange={e => onChange({ ...persona, avatar: e.target.value })}
-              className="w-16 text-center text-2xl border border-gray-200 rounded-xl px-2 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-16 text-center text-2xl border border-gray-200 rounded-xl px-2 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="🙂"
               maxLength={4}
             />
@@ -248,7 +248,7 @@ const PersonaEditModal = ({
               type="text"
               value={persona.name}
               onChange={e => onChange({ ...persona, name: e.target.value })}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="e.g. Dave"
             />
           </div>
@@ -263,7 +263,7 @@ const PersonaEditModal = ({
             value={persona.affinityProfileJson}
             onChange={e => onChange({ ...persona, affinityProfileJson: e.target.value })}
             rows={8}
-            className={`w-full border rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y ${jsonError ? 'border-red-300' : 'border-gray-200'}`}
+            className={`w-full border rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-primary resize-y ${jsonError ? 'border-red-300' : 'border-gray-200'}`}
             spellCheck={false}
           />
           <p className="text-[10px] text-gray-400 mt-1">
@@ -280,7 +280,7 @@ const PersonaEditModal = ({
           </button>
           <button
             onClick={validateAndSave}
-            className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors"
+            className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-xl hover:bg-primary-dark transition-colors"
           >
             {isNew ? 'Add' : 'Save'}
           </button>

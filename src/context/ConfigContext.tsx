@@ -103,11 +103,11 @@ const defaultConfig: DYConfig = {
   useLocale: false,
   sortByEnabled: false,
   uid: '9190339902873124000',
-  geoCode: 'US',
-  geoRegionCode: 'US_VA',
-  logoUrl: '/logo.png',
-  currency: '$',
-  categoryPath: 'Blueberry / Search',
+  geoCode: 'SA',
+  geoRegionCode: 'SA_01',
+  logoUrl: '/tamimi-logo.svg',
+  currency: 'SAR',
+  categoryPath: 'Tamimi Markets / Search',
   useDynamicBoosting: false,
   dynamicBoostingFactors: [
     {
@@ -146,7 +146,7 @@ export const ConfigProvider = ({ children }: { children: React.ReactNode }) => {
   const [lastRequestPayload, setLastRequestPayload] = useState<any>(null);
   const [cacheInvalidationKey, setCacheInvalidationKey] = useState(0);
   const [config, setConfig] = useState<DYConfig>(() => {
-    const saved = localStorage.getItem('dy_sinsay_config');
+    const saved = localStorage.getItem('dy_tamimi_config');
     try {
       const parsed = saved ? JSON.parse(saved) : defaultConfig;
       // Strip deprecated/removed fields
@@ -175,7 +175,7 @@ export const ConfigProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem('dy_sinsay_config', JSON.stringify(config));
+    localStorage.setItem('dy_tamimi_config', JSON.stringify(config));
   }, [config]);
 
   const syncFiltersFromBenchmark = (filters: SearchFilter[]) => {

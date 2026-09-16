@@ -67,6 +67,11 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       hmr: process.env.DISABLE_HMR !== 'true',
+      // Polling avoids EBUSY file-watch crashes on OneDrive/synced folders
+      watch: {
+        usePolling: true,
+        interval: 300,
+      },
     },
   };
 });

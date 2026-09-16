@@ -15,8 +15,8 @@ interface PersonaContextValue {
   activePersona: Persona | null;
 }
 
-const STORAGE_KEY = 'dy_sinsay_personas';
-const ACTIVE_KEY = 'dy_sinsay_active_persona';
+const STORAGE_KEY = 'dy_tamimi_personas';
+const ACTIVE_KEY = 'dy_tamimi_active_persona';
 
 const defaultPersonas: Persona[] = [
   {

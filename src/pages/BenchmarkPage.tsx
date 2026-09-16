@@ -212,7 +212,7 @@ const SearchFiltersTab: React.FC<{
         </p>
         <button
           onClick={addFilter}
-          className="flex items-center gap-2 px-3 py-2 bg-black text-white text-[11px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 bg-primary text-white text-[11px] font-bold uppercase tracking-widest hover:bg-primary-dark transition-colors"
         >
           <Plus size={12} /> Add Filter
         </button>
@@ -243,7 +243,7 @@ const SearchFiltersTab: React.FC<{
                     <input
                       value={filter.field}
                       onChange={(e) => updateFilter(index, 'field', e.target.value)}
-                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-black"
+                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-primary"
                       placeholder="color"
                     />
                   </td>
@@ -251,7 +251,7 @@ const SearchFiltersTab: React.FC<{
                     <input
                       value={(filter.values || []).join(', ')}
                       onChange={(e) => updateFilter(index, 'values', e.target.value.split(',').map((v) => v.trim()).filter(Boolean))}
-                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-black"
+                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-primary"
                       placeholder="red, blue, green"
                     />
                   </td>
@@ -260,7 +260,7 @@ const SearchFiltersTab: React.FC<{
                       type="number"
                       value={filter.min ?? ''}
                       onChange={(e) => updateFilter(index, 'min', e.target.value)}
-                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-black"
+                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-primary"
                       placeholder="20"
                     />
                   </td>
@@ -269,7 +269,7 @@ const SearchFiltersTab: React.FC<{
                       type="number"
                       value={filter.max ?? ''}
                       onChange={(e) => updateFilter(index, 'max', e.target.value)}
-                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-black"
+                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-primary"
                       placeholder="200"
                     />
                   </td>
@@ -295,7 +295,7 @@ const TabButton: React.FC<{ label: string; active: boolean; onClick: () => void 
   <button
     onClick={onClick}
     className={`px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest border transition-colors ${
-      active ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-500 hover:text-black hover:border-gray-300'
+      active ? 'border-primary bg-primary text-white' : 'border-gray-200 text-gray-500 hover:text-primary hover:border-gray-300'
     }`}
   >
     {label}
@@ -355,7 +355,7 @@ const QueryBoostingTab: React.FC<{
         </p>
         <button
           onClick={addRule}
-          className="flex items-center gap-2 px-3 py-2 bg-black text-white text-[11px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"
+          className="flex items-center gap-2 px-3 py-2 bg-primary text-white text-[11px] font-bold uppercase tracking-widest hover:bg-primary-dark transition-colors"
         >
           <Plus size={12} /> Add Rule
         </button>
@@ -387,7 +387,7 @@ const QueryBoostingTab: React.FC<{
                     <input
                       value={rule.query}
                       onChange={(e) => updateRule(index, 'query', e.target.value)}
-                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-black"
+                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-primary"
                       placeholder="sukienka"
                     />
                   </td>
@@ -395,7 +395,7 @@ const QueryBoostingTab: React.FC<{
                     <input
                       value={rule.field}
                       onChange={(e) => updateRule(index, 'field', e.target.value)}
-                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-black"
+                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-primary"
                       placeholder="season"
                     />
                   </td>
@@ -403,7 +403,7 @@ const QueryBoostingTab: React.FC<{
                     <input
                       value={rule.value}
                       onChange={(e) => updateRule(index, 'value', e.target.value)}
-                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-black"
+                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-primary"
                       placeholder="2026"
                     />
                   </td>
@@ -411,7 +411,7 @@ const QueryBoostingTab: React.FC<{
                     <select
                       value={rule.matchType}
                       onChange={(e) => updateRule(index, 'matchType', e.target.value)}
-                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-black bg-white"
+                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-primary bg-white"
                     >
                       <option value="CONTAINS">CONTAINS</option>
                       <option value="IS">IS</option>
@@ -424,7 +424,7 @@ const QueryBoostingTab: React.FC<{
                       type="number"
                       value={rule.weight}
                       onChange={(e) => updateRule(index, 'weight', e.target.value)}
-                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-black"
+                      className="w-full border border-gray-200 rounded-sm px-2 py-1.5 text-[12px] outline-none focus:border-primary"
                       placeholder="50"
                       min="-100"
                       max="100"
@@ -645,7 +645,7 @@ export const BenchmarkPage: React.FC = () => {
         <div className="flex items-center gap-4">
           <a
             href="/"
-            className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors"
+            className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-gray-400 hover:text-primary transition-colors"
           >
             <ArrowLeft size={14} /> Back to Search
           </a>
@@ -655,7 +655,7 @@ export const BenchmarkPage: React.FC = () => {
         {result && (
           <button
             onClick={handleDownload}
-            className="flex items-center gap-2 px-4 py-2 bg-black text-white text-[11px] font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-[11px] font-bold uppercase tracking-widest hover:bg-primary-dark transition-colors"
           >
             <Download size={14} /> Download Report
           </button>
@@ -675,7 +675,7 @@ export const BenchmarkPage: React.FC = () => {
             <button
               onClick={handleRun}
               disabled={running || !!jsonError}
-              className="flex items-center gap-2 px-5 py-2.5 bg-black text-white text-[11px] font-bold uppercase tracking-widest hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-[11px] font-bold uppercase tracking-widest hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               <Play size={13} />
               {running ? 'Running…' : 'Run Benchmark'}
@@ -746,7 +746,7 @@ export const BenchmarkPage: React.FC = () => {
                 spellCheck={false}
                 rows={20}
                 className={`w-full font-mono text-[12px] bg-gray-50 border rounded-sm p-4 outline-none resize-y focus:bg-white transition-colors ${
-                  jsonError ? 'border-red-300 focus:border-red-400' : 'border-gray-200 focus:border-black'
+                  jsonError ? 'border-red-300 focus:border-red-400' : 'border-gray-200 focus:border-primary'
                 }`}
               />
             ) : activeTab === 'boosts' ? (
@@ -766,7 +766,7 @@ export const BenchmarkPage: React.FC = () => {
           <div className="border-t border-gray-100">
             <button
               onClick={() => setExpandedConfigs((v) => !v)}
-              className="w-full flex items-center justify-between px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-gray-400 hover:text-black transition-colors"
+              className="w-full flex items-center justify-between px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-gray-400 hover:text-primary transition-colors"
             >
               <span>Current app config (available keys for overrides)</span>
               {expandedConfigs ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
@@ -790,7 +790,7 @@ export const BenchmarkPage: React.FC = () => {
             </div>
             <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-black transition-all duration-300"
+                className="h-full bg-primary transition-all duration-300"
                 style={{ width: `${progress.total > 0 ? (progress.completed / progress.total) * 100 : 0}%` }}
               />
             </div>

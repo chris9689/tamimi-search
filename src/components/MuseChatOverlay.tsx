@@ -51,14 +51,14 @@ export const MuseChatOverlay: React.FC<MuseChatOverlayProps> = ({ onClose }) => 
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'Hi, I am Muse. Tell me what you want to shop for and I will help you find products.',
+      text: 'Hi, I am Muse. Tell me what you are planning to cook or shop for and I will help you find products.',
     },
   ]);
 
   const { mutateAsync, isPending, error } = useShoppingMuse();
   const listRef = useRef<HTMLDivElement>(null);
   const sliderRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const currency = (config.currency || 'PLN').toUpperCase();
+  const currency = (config.currency || 'SAR').toUpperCase();
 
   const canSend = useMemo(() => draft.trim().length > 0 && draft.trim().length <= 250 && !isPending, [draft, isPending]);
 
@@ -156,7 +156,7 @@ export const MuseChatOverlay: React.FC<MuseChatOverlayProps> = ({ onClose }) => 
         >
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <MessageCircle size={18} />
+              <MessageCircle size={18} className="text-primary" />
               <h2 className="text-sm font-bold uppercase tracking-wider">Ask Muse</h2>
             </div>
             <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close chat">
@@ -164,14 +164,14 @@ export const MuseChatOverlay: React.FC<MuseChatOverlayProps> = ({ onClose }) => 
             </button>
           </div>
 
-          <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-[#fcfcfc]">
+          <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-canvas">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div
                   className={`max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed border ${
                     msg.role === 'user'
-                      ? 'bg-black text-white border-black'
-                      : 'bg-white text-black border-gray-200'
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-white text-ink border-gray-200'
                   }`}
                 >
                   <p>{msg.text}</p>
@@ -191,7 +191,7 @@ export const MuseChatOverlay: React.FC<MuseChatOverlayProps> = ({ onClose }) => 
                               <button
                                 type="button"
                                 onClick={() => scrollSlider(`${msg.id}-widget-${widgetIdx}`, 'left')}
-                                className="h-6 w-6 rounded border border-gray-200 bg-white flex items-center justify-center hover:border-black"
+                                className="h-6 w-6 rounded border border-gray-200 bg-white flex items-center justify-center hover:border-primary"
                                 aria-label="Slide left"
                               >
                                 <ChevronLeft size={14} />
@@ -199,7 +199,7 @@ export const MuseChatOverlay: React.FC<MuseChatOverlayProps> = ({ onClose }) => 
                               <button
                                 type="button"
                                 onClick={() => scrollSlider(`${msg.id}-widget-${widgetIdx}`, 'right')}
-                                className="h-6 w-6 rounded border border-gray-200 bg-white flex items-center justify-center hover:border-black"
+                                className="h-6 w-6 rounded border border-gray-200 bg-white flex items-center justify-center hover:border-primary"
                                 aria-label="Slide right"
                               >
                                 <ChevronRight size={14} />
@@ -234,7 +234,7 @@ export const MuseChatOverlay: React.FC<MuseChatOverlayProps> = ({ onClose }) => 
                                     </div>
                                     <div className="p-2">
                                       <p className="text-[11px] font-medium line-clamp-2 h-8">{getSlotDisplayName(slot)}</p>
-                                      <p className="text-[10px] text-black/60 font-semibold mt-1 truncate">
+                                      <p className="text-[10px] text-muted font-semibold mt-1 truncate">
                                         {getSlotPrice(slot)} {currency}
                                       </p>
                                     </div>
@@ -265,10 +265,10 @@ export const MuseChatOverlay: React.FC<MuseChatOverlayProps> = ({ onClose }) => 
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder="Ask for products, outfits, style ideas, or recommendations..."
+                placeholder="Ask for recipes, meal ideas, or product recommendations..."
                 rows={2}
                 maxLength={250}
-                className="flex-1 resize-none bg-black/5 hover:bg-black/8 focus:bg-white border border-transparent focus:border-black rounded-sm py-2 px-3 text-sm transition-all outline-none"
+                className="flex-1 resize-none bg-black/5 hover:bg-black/[0.07] focus:bg-white border border-transparent focus:border-primary rounded-sm py-2 px-3 text-sm transition-all outline-none"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -280,7 +280,7 @@ export const MuseChatOverlay: React.FC<MuseChatOverlayProps> = ({ onClose }) => 
                 onClick={() => void sendMessage()}
                 disabled={!canSend}
                 className={`h-10 px-4 rounded-sm text-xs font-bold uppercase tracking-widest transition-colors ${
-                  canSend ? 'bg-black text-white hover:bg-gray-900' : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                  canSend ? 'bg-primary text-white hover:bg-primary-dark' : 'bg-gray-300 text-gray-600 cursor-not-allowed'
                 }`}
               >
                 <Send size={14} />

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Heart, ShoppingBag, Camera } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Heart, ShoppingBag, Camera, Plus } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { ScoreInfo } from './ScoreInfoIcon';
 import { useConfig } from '../context/ConfigContext';
 
@@ -21,7 +21,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ item, onVisualSearch }
   const productUrl = item.url || item.product_url || '#';
   const brand = typeof item.brand === 'string' ? item.brand.trim() : '';
   const secondaryImageUrl = item.image_url_secondary || imageUrl;
-  const currency = (config.currency || 'PLN').toUpperCase();
+  const currency = (config.currency || 'SAR').toUpperCase();
+
+  // Discount handling — supports either a fraction (0.3) or a percentage (30)
+  const rawPct = Number(item.discount_percentage) || 0;
+  const discountPct = rawPct > 0 && rawPct < 1 ? Math.round(rawPct * 100) : Math.round(rawPct);
+  const hasDiscount = discountPct > 0;
+  const numericPrice = Number(price) || 0;
+  const originalPrice = hasDiscount && numericPrice > 0 ? numericPrice / (1 - discountPct / 100) : null;
+  const ribbonText = hasDiscount ? `${discountPct}% OFF` : (item.on_sale ? 'SALE' : null);
 
   return (
     <motion.div 
@@ -32,15 +40,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ item, onVisualSearch }
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => productUrl !== '#' && window.open(productUrl, '_blank')}
     >
-      {/* Image Container with Frosted Glass Overlay */}
-      <div className="relative aspect-3/4 bg-gray-100 overflow-hidden">
+      {/* Image Container — clean white grocery packshot card */}
+      <div className="relative aspect-square bg-white rounded-lg border border-line overflow-hidden">
         {imageUrl ? (
           <img 
             src={isHovered ? (secondaryImageUrl || imageUrl) : imageUrl} 
             alt={title}
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className="h-full w-full object-contain p-3 transition-transform duration-500 group-hover:scale-105"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = 'https://placehold.co/400x600?text=No+Image';
+              (e.target as HTMLImageElement).src = 'https://placehold.co/400x400?text=No+Image';
             }}
           />
         ) : (
@@ -48,76 +56,73 @@ export const ProductCard: React.FC<ProductCardProps> = ({ item, onVisualSearch }
             <ShoppingBag size={48} strokeWidth={1} />
           </div>
         )}
-        
-        {/* Score Info Icon */}
-        <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-          <ScoreInfo item={item} />
-        </div>
-        
-        {/* SALE Badge - Sinsay Style */}
-        {item.on_sale && (
-          <div className="absolute top-2 left-2 bg-sinsay-red text-white text-[10px] font-bold px-2 py-1 tracking-wider">
-            SALE
-          </div>
+
+        {/* Angled crimson "% OFF" ribbon */}
+        {ribbonText && (
+          <div className="tm-ribbon">{ribbonText}</div>
         )}
 
-        {/* ECO Badge */}
+        {/* Score Info Icon (demo tooling) */}
+        <div className="absolute top-2 right-11 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <ScoreInfo item={item} />
+        </div>
+
+        {/* ECO / Organic Badge */}
         {item.eco_aware && (
-          <div className="absolute bottom-2 left-2 bg-green-700 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter">
-            ECO AWARE
+          <div className="absolute bottom-2 left-2 bg-secondary text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter">
+            Organic
           </div>
         )}
 
         {/* Wishlist Button */}
-        <button className="absolute top-2 right-2 p-1.5 rounded-full hover:bg-white/20 transition-colors">
-          <Heart size={18} className={`text-gray-900 group-hover:text-black drop-shadow-sm`} />
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 hover:bg-white transition-colors"
+          aria-label="Add to wishlist"
+        >
+          <Heart size={18} className="text-ink group-hover:text-primary transition-colors drop-shadow-sm" />
         </button>
 
-        {/* Quick Add Overlay - Frosted Glass */}
-        <AnimatePresence>
-          {isHovered && (
-            <motion.div 
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className="absolute inset-x-0 bottom-0 frosted-glass p-4 space-y-2"
-            >
-              <button className="w-full bg-black text-white py-2 text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-gray-900 transition-colors">
-                <ShoppingBag size={14} /> Add to Cart
-              </button>
-              {onVisualSearch && (
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const selectedImageUrl = imageUrl || item.image_url_small || item.imageUrl || '';
-                    if (selectedImageUrl) {
-                      onVisualSearch(selectedImageUrl);
-                    }
-                  }}
-                  className="w-full bg-white/85 text-black py-2 text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white transition-colors border border-black/20"
-                  title="Search with this product image"
-                >
-                  <Camera size={14} /> Visual Search
-                </button>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Visual Search — appears on hover */}
+        {onVisualSearch && (
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              const selectedImageUrl = imageUrl || item.image_url_small || item.imageUrl || '';
+              if (selectedImageUrl) {
+                onVisualSearch(selectedImageUrl);
+              }
+            }}
+            className="absolute bottom-2 left-2 p-2 rounded-full bg-white/85 border border-line text-ink hover:text-primary opacity-0 group-hover:opacity-100 transition-all"
+            title="Search with this product image"
+            aria-label="Visual search"
+          >
+            <Camera size={16} />
+          </button>
+        )}
+
+        {/* Persistent crimson add button (Tamimi signature) */}
+        <button
+          onClick={(e) => e.stopPropagation()}
+          className="absolute bottom-2 right-2 h-9 w-9 rounded-full bg-primary text-white flex items-center justify-center shadow-md hover:bg-primary-dark active:scale-95 transition-all"
+          aria-label="Add to cart"
+        >
+          <Plus size={18} strokeWidth={2.5} />
+        </button>
       </div>
 
       {/* Info Container */}
       <div className="mt-3 space-y-1">
-        {brand ? <p className="text-[10px] text-gray-400 uppercase tracking-widest">{brand}</p> : null}
-        <h3 className="text-[13px] font-normal text-gray-800 line-clamp-1 leading-tight">{title}</h3>
-        <div className="flex items-baseline gap-2">
-          {item.discount_percentage ? (
+        {brand ? <p className="text-[10px] text-muted uppercase tracking-widest">{brand}</p> : null}
+        <h3 className="text-[13px] font-medium text-ink line-clamp-2 leading-snug min-h-[2.4em]">{title}</h3>
+        <div className="flex items-baseline gap-2 pt-0.5">
+          {originalPrice ? (
             <>
-              <p className="text-[14px] font-bold text-sinsay-red">{price} {currency}</p>
-              <p className="text-[11px] text-gray-400 line-through">{(price * 1.3).toFixed(2)} {currency}</p>
+              <p className="text-[15px] font-bold text-primary">{price} {currency}</p>
+              <p className="text-[11px] text-gray-400 line-through">{originalPrice.toFixed(2)} {currency}</p>
             </>
           ) : (
-            <p className="text-[14px] font-bold">{price} {currency}</p>
+            <p className="text-[15px] font-bold text-ink">{price} {currency}</p>
           )}
         </div>
       </div>

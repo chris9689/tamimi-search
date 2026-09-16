@@ -1,23 +1,60 @@
 @import "tailwindcss";
 
 @theme {
-  --color-sinsay-red: #cc0000;
+  /* Tamimi Markets brand tokens (sampled from the live store) */
+  --color-primary: #be1e2e;
+  --color-primary-dark: #9c1826;
+  --color-primary-container: #f7e1e3;
+  --color-on-primary: #ffffff;
+  --color-secondary: #38761d;
+  --color-secondary-container: #e2efdb;
+  --color-tertiary: #c8791a;
+  --color-tertiary-container: #fbebd6;
+  --color-ink: #1a1a1a;
+  --color-muted: #59585b;
+  --color-canvas: #f7f7f8;
+  --color-card: #ffffff;
+  --color-line: #e6e7e9;
+  --color-success: #38761d;
+  --color-warning: #c8791a;
+
   --color-glass-white: rgba(255, 255, 255, 0.8);
   --color-glass-border: rgba(255, 255, 255, 0.2);
+
+  --font-sans: "Noto Sans", "Noto Sans Arabic", "Segoe UI", system-ui, sans-serif;
+  --font-heading: "Plus Jakarta Sans", "Noto Sans", "Segoe UI", system-ui, sans-serif;
 }
 
 @layer base {
   body {
-    @apply text-[#1a1a1a] font-sans antialiased;
+    @apply text-ink font-sans antialiased bg-canvas;
   }
 }
 
 .frosted-glass {
-  @apply bg-white/70 backdrop-blur-md border border-white/20;
+  @apply bg-white/80 backdrop-blur-md border-b border-line;
 }
 
 .frosted-glass-dark {
-  @apply bg-black/70 backdrop-blur-md border border-white/10;
+  @apply bg-primary/90 backdrop-blur-md border border-white/10;
+}
+
+/* Angled "% OFF" discount ribbon (Tamimi live-store pattern) */
+.tm-ribbon {
+  position: absolute;
+  top: 0.75rem;
+  left: -2.25rem;
+  width: 8rem;
+  transform: rotate(-45deg);
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  text-align: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 0.2rem 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
 }
 
 .custom-scrollbar {

@@ -26,7 +26,7 @@ export const VisualSearchOverlay: React.FC<VisualSearchOverlayProps> = ({
   const visualSliderRef = useRef<HTMLDivElement>(null);
 
   const { results, totalResults, loading: isSearching, error: searchError } = useVisualSearch(searchPayload);
-  const currency = (config.currency || 'PLN').toUpperCase();
+  const currency = (config.currency || 'SAR').toUpperCase();
 
   const widgetItems = results.slice(0, 20);
 
@@ -144,7 +144,7 @@ export const VisualSearchOverlay: React.FC<VisualSearchOverlayProps> = ({
         >
           <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
             <div className="flex items-center gap-3">
-              <Camera size={20} className="text-black" />
+              <Camera size={20} className="text-primary" />
               <h2 className="text-lg font-bold uppercase tracking-wider">Visual Search</h2>
             </div>
             <button
@@ -169,8 +169,8 @@ export const VisualSearchOverlay: React.FC<VisualSearchOverlayProps> = ({
                       onClick={() => handleSwitchMode('product')}
                       className={`flex-1 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all ${
                         useMode === 'product'
-                          ? 'bg-black text-white'
-                          : 'bg-gray-100 text-black hover:bg-gray-200'
+                          ? 'bg-primary text-white'
+                          : 'bg-gray-100 text-ink hover:bg-gray-200'
                       }`}
                     >
                       Product Image
@@ -180,8 +180,8 @@ export const VisualSearchOverlay: React.FC<VisualSearchOverlayProps> = ({
                     onClick={() => handleSwitchMode('upload')}
                     className={`flex-1 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all ${
                       useMode === 'upload'
-                        ? 'bg-black text-white'
-                        : 'bg-gray-100 text-black hover:bg-gray-200'
+                        ? 'bg-primary text-white'
+                        : 'bg-gray-100 text-ink hover:bg-gray-200'
                     }`}
                   >
                     Upload Image
@@ -208,7 +208,7 @@ export const VisualSearchOverlay: React.FC<VisualSearchOverlayProps> = ({
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
-                    className="aspect-square bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-black hover:bg-gray-100 transition-all"
+                    className="aspect-square bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-gray-100 transition-all"
                   >
                     <Upload size={32} className="text-gray-400 mb-2" />
                     <p className="text-xs font-bold text-gray-600 uppercase tracking-wider">
@@ -230,7 +230,7 @@ export const VisualSearchOverlay: React.FC<VisualSearchOverlayProps> = ({
                 {useMode === 'upload' && selectedImage && (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full px-4 py-2 bg-gray-100 text-black text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-200 transition-all"
+                    className="w-full px-4 py-2 bg-gray-100 text-ink text-xs font-bold uppercase tracking-wider rounded hover:bg-gray-200 transition-all"
                   >
                     Change Image
                   </button>
@@ -253,7 +253,7 @@ export const VisualSearchOverlay: React.FC<VisualSearchOverlayProps> = ({
                   disabled={!canSearch}
                   className={`w-full px-4 py-3 text-xs font-bold uppercase tracking-wider rounded transition-all ${
                     canSearch
-                      ? 'bg-black text-white hover:bg-gray-900'
+                      ? 'bg-primary text-white hover:bg-primary-dark'
                       : 'bg-gray-300 text-gray-600 cursor-not-allowed'
                   }`}
                 >
@@ -305,7 +305,7 @@ export const VisualSearchOverlay: React.FC<VisualSearchOverlayProps> = ({
                             <button
                               type="button"
                               onClick={() => scrollVisualSlider('left')}
-                              className="h-6 w-6 rounded border border-gray-200 bg-white flex items-center justify-center hover:border-black"
+                              className="h-6 w-6 rounded border border-gray-200 bg-white flex items-center justify-center hover:border-primary"
                               aria-label="Slide left"
                             >
                               <ChevronLeft size={14} />
@@ -313,7 +313,7 @@ export const VisualSearchOverlay: React.FC<VisualSearchOverlayProps> = ({
                             <button
                               type="button"
                               onClick={() => scrollVisualSlider('right')}
-                              className="h-6 w-6 rounded border border-gray-200 bg-white flex items-center justify-center hover:border-black"
+                              className="h-6 w-6 rounded border border-gray-200 bg-white flex items-center justify-center hover:border-primary"
                               aria-label="Slide right"
                             >
                               <ChevronRight size={14} />
@@ -335,7 +335,7 @@ export const VisualSearchOverlay: React.FC<VisualSearchOverlayProps> = ({
                                   <ScoreInfo item={item} />
                                 </div>
 
-                                <div className="aspect-4/5 overflow-hidden rounded-t bg-gray-100">
+                                <div className="aspect-square overflow-hidden rounded-t bg-white">
                                   <img
                                     src={
                                       item.image_url ||
@@ -343,12 +343,12 @@ export const VisualSearchOverlay: React.FC<VisualSearchOverlayProps> = ({
                                       item.imageUrl ||
                                       item.productData?.image_url ||
                                       item.productData?.imageUrl ||
-                                      'https://placehold.co/280x360?text=No+Image'
+                                      'https://placehold.co/280x280?text=No+Image'
                                     }
                                     alt={item.name || item.productData?.name || 'Product'}
-                                    className="w-full h-full object-cover"
+                                    className="w-full h-full object-contain p-2"
                                     onError={(e) => {
-                                      (e.target as HTMLImageElement).src = 'https://placehold.co/280x360?text=No+Image';
+                                      (e.target as HTMLImageElement).src = 'https://placehold.co/280x280?text=No+Image';
                                     }}
                                   />
                                 </div>
@@ -357,7 +357,7 @@ export const VisualSearchOverlay: React.FC<VisualSearchOverlayProps> = ({
                                   <p className="text-xs font-bold line-clamp-2 h-9">
                                     {item.name || item.productData?.name || 'Unknown'}
                                   </p>
-                                  <p className="text-sm font-semibold text-black/60 mt-1">
+                                  <p className="text-sm font-semibold text-muted mt-1">
                                     {item.price || item.dy_display_price || item.productData?.dy_display_price || 'N/A'} {currency}
                                   </p>
                                 </div>

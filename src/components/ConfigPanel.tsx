@@ -4,7 +4,7 @@ import { useRequestLog, RequestLogEntry } from '../context/RequestLogContext';
 import { X, Terminal, Settings, Save, Database, RefreshCw, Globe, Cpu, Search, Layout, Codepen, Copy, Check, ImagePlus, ChevronDown, Plus, Trash2, Key, Eye, EyeOff, RefreshCcw, Wifi, Upload, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const inputClassName = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder:text-gray-400';
+const inputClassName = 'w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400';
 const codeBlockClassName = 'rounded-xl border border-gray-800 bg-gray-900 text-gray-100';
 const BENCHMARK_STORAGE_KEY = 'dy_benchmark_spec';
 
@@ -56,7 +56,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
   };
 
   const handleReset = () => {
-    localStorage.removeItem('dy_sinsay_config');
+    localStorage.removeItem('dy_tamimi_config');
     window.location.reload();
   };
 
@@ -227,7 +227,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
   const tabClassName = (tab: 'config' | 'payload' | 'network') =>
     `inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium transition-colors ${
       activeTab === tab
-        ? 'bg-indigo-50 text-indigo-700 shadow-sm'
+        ? 'bg-primary-container text-primary shadow-sm'
         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
     }`;
 
@@ -252,14 +252,14 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-container text-primary">
                   <Settings size={20} />
                 </div>
                 <div>
                   <span className="hidden" aria-hidden="true">
                     <Terminal size={0} />
                   </span>
-                  <h2 className="text-lg font-semibold text-gray-900">DY Search Settings</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">Tamimi Search Settings</h2>
                   <p className="mt-0.5 text-sm text-gray-500">Configure search, inspect payloads, and review network traffic.</p>
                 </div>
               </div>
@@ -304,7 +304,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                     onClick={() => updateField('apiMode', 'standard')}
                     className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
                       localConfig.apiMode === 'standard'
-                        ? 'bg-indigo-600 text-white shadow-sm'
+                        ? 'bg-primary text-white shadow-sm'
                         : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
@@ -315,7 +315,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                     onClick={() => updateField('apiMode', 'extended')}
                     className={`rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
                       localConfig.apiMode === 'extended'
-                        ? 'bg-indigo-600 text-white shadow-sm'
+                        ? 'bg-primary text-white shadow-sm'
                         : 'text-gray-600 hover:bg-gray-100'
                     }`}
                   >
@@ -427,7 +427,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                       description="URL or data URI"
                     />
                     <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50">
-                      <ImagePlus size={14} className="text-indigo-600" />
+                      <ImagePlus size={14} className="text-primary" />
                       Upload Logo
                       <input
                         type="file"
@@ -458,7 +458,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                         type="button"
                         onClick={fetchWidgets}
                         disabled={fetchingWidgets}
-                        className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700 disabled:opacity-40"
+                        className="inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary-dark disabled:opacity-40"
                       >
                         <RefreshCcw size={14} className={fetchingWidgets ? 'animate-spin' : ''} />
                         {fetchingWidgets ? 'Fetching…' : 'Fetch from API'}
@@ -571,7 +571,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                     label="Category Path"
                     value={localConfig.categoryPath}
                     onChange={(v: string) => updateField('categoryPath', v)}
-                    description="Format: Sinsay / Women / Search"
+                    description="Format: Tamimi Markets / Fresh Food / Search"
                     className="sm:col-span-2"
                   />
                 </div>
@@ -622,7 +622,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
                           <button
                             type="button"
                             onClick={addDynamicBoostingFactor}
-                            className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 px-3 py-2 text-sm font-medium text-indigo-600 transition-colors hover:border-indigo-300 hover:bg-indigo-50"
+                            className="inline-flex items-center gap-1 rounded-lg border border-primary/30 px-3 py-2 text-sm font-medium text-primary transition-colors hover:border-primary/50 hover:bg-primary-container"
                           >
                             <Plus size={14} /> Add Filter
                           </button>
@@ -768,14 +768,14 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
               <button
                 type="button"
                 onClick={handleExportAllPreset}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary-container px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary-container"
               >
                 <Download size={16} /> Export All Preset
               </button>
               <button
                 type="button"
                 onClick={() => importAllInputRef.current?.click()}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 transition-colors hover:bg-indigo-100"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary-container px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary-container"
               >
                 <Upload size={16} /> Import All Preset
               </button>
@@ -795,7 +795,7 @@ export const ConfigPanel = ({ onClose }: { onClose: () => void }) => {
               <button
                 type="button"
                 onClick={handleSave}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
               >
                 <Save size={16} /> Save
               </button>
@@ -857,7 +857,7 @@ const Toggle = ({ label, checked, onChange }: any) => (
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-indigo-600' : 'bg-gray-300'}`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-primary' : 'bg-gray-300'}`}
       aria-pressed={checked}
     >
       <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
@@ -916,7 +916,7 @@ const NetworkTab = ({ log, onClear }: { log: RequestLogEntry[]; onClear: () => v
                   type="button"
                   key={e.id}
                   onClick={() => setSelected(e.id)}
-                  className={`grid w-full grid-cols-[52px_72px_64px_minmax(0,1fr)] gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors last:border-b-0 ${selected === e.id ? 'bg-indigo-50' : 'hover:bg-gray-50'}`}
+                  className={`grid w-full grid-cols-[52px_72px_64px_minmax(0,1fr)] gap-3 border-b border-gray-100 px-4 py-3 text-left transition-colors last:border-b-0 ${selected === e.id ? 'bg-primary-container' : 'hover:bg-gray-50'}`}
                 >
                   <div className="space-y-1 text-xs text-gray-500">
                     <div>#{log.length - i}</div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, SlidersHorizontal, ChevronDown, Heart, ShoppingBag, User, X, Camera, MessageCircle } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronDown, Heart, ShoppingBag, User, X, Camera, MessageCircle, Leaf } from 'lucide-react';
 import { useDYSearch } from './hooks/useDYSearch';
 import { useConfig } from './context/ConfigContext';
 import { extractDyPayload } from './utils/dyResponseAdapter';
@@ -71,7 +71,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfcfc] transition-colors duration-500">
+    <div className="min-h-screen bg-canvas transition-colors duration-500">
       <AnimatePresence>
         {showConfig && <ConfigPanel onClose={() => setShowConfig(false)} />}
       </AnimatePresence>
@@ -91,49 +91,42 @@ export default function App() {
         </div>
       )}
 
-      {/* Sinsay Header with Frosted Glass */}
+      {/* Tamimi Markets Header */}
       <header className="sticky top-0 z-50 frosted-glass shadow-sm">
         <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between gap-8">
-          {logoError ? (
-            <div className="relative group">
-              <div className="text-3xl font-black tracking-tighter uppercase cursor-pointer select-none pb-3">
-                Sinsay
+          <div className="relative group">
+            {!logoError ? (
+              <img src={config.logoUrl || '/tamimi-logo.svg'} alt="Tamimi Markets" className="h-10 w-auto cursor-pointer select-none pb-3 box-content" onError={() => setLogoError(true)} />
+            ) : (
+              <div className="flex items-center gap-1.5 cursor-pointer select-none pb-3">
+                <span className="font-heading text-2xl font-extrabold lowercase tracking-tight text-primary">tamimi</span>
+                <span className="font-heading text-2xl font-extrabold lowercase tracking-tight text-ink">markets</span>
+                <Leaf size={16} className="text-secondary -ml-0.5 -mt-3 rotate-45" strokeWidth={2.5} />
               </div>
-              <div className="absolute top-full left-0 -translate-y-3 pt-3 w-44 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
-                <div className="bg-white border border-gray-100 shadow-lg rounded-sm">
-                  <a href="/benchmark" className="flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
-                    Search Benchmark
-                  </a>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="relative group">
-              <img src={config.logoUrl || '/logo.png'} alt="Sinsay" className="h-8 cursor-pointer select-none pb-3 box-content" onError={() => setLogoError(true)} />
-              <div className="absolute top-full left-0 -translate-y-3 pt-3 w-44 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
-                <div className="bg-white border border-gray-100 shadow-lg rounded-sm">
-                  <a href="/benchmark" className="flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-gray-600 hover:text-black hover:bg-gray-50 transition-colors">
-                    Search Benchmark
-                  </a>
-                </div>
+            )}
+            <div className="absolute top-full left-0 -translate-y-3 pt-3 w-44 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity z-50">
+              <div className="bg-white border border-line shadow-lg rounded-sm">
+                <a href="/benchmark" className="flex items-center gap-2 px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-muted hover:text-primary hover:bg-gray-50 transition-colors">
+                  Search Benchmark
+                </a>
               </div>
             </div>
-          )}
+          </div>
 
-          <div className="flex-1 max-w-xl flex items-center gap-2">
+          <div className="flex-1 max-w-2xl flex items-center gap-2">
             <div className="relative flex-1">
               <input 
                 type="text"
                 value={searchTerm}
-                placeholder="Search for products..."
-                className="w-full bg-black/5 hover:bg-black/8 focus:bg-white border-transparent focus:border-black rounded-sm py-2.5 px-11 text-sm transition-all outline-none"
+                placeholder="Search groceries, brands, and more…"
+                className="w-full bg-black/5 hover:bg-black/[0.07] focus:bg-white border border-transparent focus:border-primary rounded-sm py-2.5 px-11 text-sm transition-all outline-none"
                 onChange={handleSearchChange}
               />
-              <Search className="absolute left-3.5 top-3 text-gray-400 group-focus-within:text-black transition-colors" size={18} />
+              <Search className="absolute left-3.5 top-3 text-gray-400 group-focus-within:text-primary transition-colors" size={18} />
               {searchTerm && (
                 <button 
                   onClick={() => { setSearchTerm(''); updateSearch(''); }}
-                  className="absolute right-3.5 top-3 text-gray-400 hover:text-black"
+                  className="absolute right-3.5 top-3 text-gray-400 hover:text-primary"
                 >
                   <X size={18} />
                 </button>
@@ -143,7 +136,7 @@ export default function App() {
                   setProductImageForSearch(undefined);
                   setShowVisualSearch(true);
                 }}
-                className="absolute right-12 top-3 text-gray-400 hover:text-black transition-colors"
+                className="absolute right-12 top-3 text-gray-400 hover:text-primary transition-colors"
                 title="Visual search"
                 aria-label="Visual search"
               >
@@ -152,25 +145,31 @@ export default function App() {
             </div>
             <button
               onClick={() => setShowMuseChat(true)}
-              className="h-10 px-3.5 border border-black text-black bg-white hover:bg-black hover:text-white transition-colors rounded-sm text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 whitespace-nowrap"
+              className="h-10 px-3.5 border border-primary text-primary bg-white hover:bg-primary hover:text-white transition-colors rounded-sm text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 whitespace-nowrap"
               aria-label="Ask Muse"
             >
               <MessageCircle size={14} />
               Ask Muse
             </button>
+            <img
+              src="/1000103986-20240311-064145.webp"
+              alt="Tamimi delivery"
+              title="Tamimi delivery & online shopping"
+              className="hidden xl:block h-10 w-auto max-w-[150px] rounded-lg object-contain shrink-0"
+            />
           </div>
 
           <div className="flex items-center gap-7">
             <div className="hidden md:flex items-center gap-6">
               <User size={24} strokeWidth={1.5} className="cursor-pointer hover:scale-110 transition-transform" />
               <div className="relative">
-                <Heart size={24} strokeWidth={1.5} className="cursor-pointer hover:scale-110 transition-transform" />
-                <span className="absolute -top-1.5 -right-1.5 bg-black text-white text-[8px] font-bold h-4 w-4 rounded-full flex items-center justify-center">0</span>
+                <Heart size={24} strokeWidth={1.5} className="cursor-pointer hover:scale-110 hover:text-primary transition-all" />
+                <span className="absolute -top-1.5 -right-1.5 bg-primary text-white text-[8px] font-bold h-4 w-4 rounded-full flex items-center justify-center">0</span>
               </div>
             </div>
             <div className="relative">
-              <ShoppingBag size={24} strokeWidth={1.5} className="cursor-pointer hover:scale-110 transition-transform" />
-              <span className="absolute -top-1.5 -right-1.5 bg-black text-white text-[8px] font-bold h-4 w-4 rounded-full flex items-center justify-center">0</span>
+              <ShoppingBag size={24} strokeWidth={1.5} className="cursor-pointer hover:scale-110 hover:text-primary transition-all" />
+              <span className="absolute -top-1.5 -right-1.5 bg-primary text-white text-[8px] font-bold h-4 w-4 rounded-full flex items-center justify-center">0</span>
             </div>
           </div>
         </div>
@@ -184,28 +183,28 @@ export default function App() {
               {breadcrumbParts.length > 0 ? (
                 breadcrumbParts.map((part, idx) => (
                   <React.Fragment key={`${part}-${idx}`}>
-                    <span className={idx === breadcrumbParts.length - 1 ? 'text-black font-bold' : 'hover:text-black cursor-pointer'}>
+                    <span className={idx === breadcrumbParts.length - 1 ? 'text-ink font-bold' : 'hover:text-primary cursor-pointer'}>
                       {part}
                     </span>
                     {idx < breadcrumbParts.length - 1 ? <span>/</span> : null}
                   </React.Fragment>
                 ))
               ) : (
-                <span className="text-black font-bold">Search</span>
+                <span className="text-ink font-bold">Search</span>
               )}
             </nav>
-            <h1 className="text-3xl font-light uppercase tracking-tight flex items-center gap-4">
-              {debouncedSearch ? `Search Results: ${debouncedSearch}` : 'New Arrivals'}
+            <h1 className="text-3xl font-heading font-semibold tracking-tight flex items-center gap-4">
+              {debouncedSearch ? `Search results: ${debouncedSearch}` : 'Featured groceries'}
               <span className="text-sm text-gray-400 font-normal normal-case">
-                ({totalNumResults || 0} items{isFallback && <span className="text-red-500 text-[10px] ml-0.5" title="Showing fallback results (affinity profile returned no results)">f</span>})
+                ({totalNumResults || 0} items{isFallback && <span className="text-primary text-[10px] ml-0.5" title="Showing fallback results (affinity profile returned no results)">f</span>})
               </span>
             </h1>
           </div>
           
           <div className="flex items-center gap-6 text-[11px] font-bold uppercase tracking-[0.15em] text-gray-400">
             <span className="hidden sm:inline">Sort by:</span>
-            <div className="relative group cursor-pointer border-b border-transparent hover:border-black transition-all">
-              <button className="flex items-center gap-1.5 text-black py-1">
+            <div className="relative group cursor-pointer border-b border-transparent hover:border-primary transition-all">
+              <button className="flex items-center gap-1.5 text-ink py-1">
                 Recommended <ChevronDown size={14} />
               </button>
             </div>
@@ -229,12 +228,12 @@ export default function App() {
                       facet.options.map((opt) => (
                         <label 
                           key={opt.value} 
-                          className="flex items-center gap-3.5 text-[13px] text-gray-600 hover:text-black cursor-pointer group transition-colors"
+                          className="flex items-center gap-3.5 text-[13px] text-gray-600 hover:text-primary cursor-pointer group transition-colors"
                         >
                           <div className="relative flex items-center justify-center">
                             <input 
                               type="checkbox" 
-                              className="peer h-4 w-4 border-gray-200 rounded-none checked:bg-black checked:border-black transition-all appearance-none border" 
+                              className="peer h-4 w-4 border-gray-200 rounded-none checked:bg-primary checked:border-primary transition-all appearance-none border" 
                               checked={selectedFilters.some(f => f.field === facet.key && f.values.includes(opt.value))}
                               onChange={() => toggleFilter(facet.key, opt.value)}
                             />
@@ -299,7 +298,7 @@ export default function App() {
                   </p>
                   <button
                     onClick={() => { setSearchTerm(''); updateSearch(''); setSelectedFilters([]); }}
-                    className="mt-8 px-8 py-3 bg-black text-white text-xs font-bold uppercase tracking-widest hover:bg-gray-900 transition-colors"
+                    className="mt-8 px-8 py-3 bg-primary text-white text-xs font-bold uppercase tracking-widest hover:bg-primary-dark transition-colors"
                   >
                     Clear all filters
                   </button>
@@ -326,7 +325,7 @@ export default function App() {
                 <button 
                   disabled={offset === 0}
                   onClick={() => setOffset(Math.max(0, offset - config.itemsPerPage))}
-                  className="px-6 py-2 border border-gray-200 text-[11px] font-bold uppercase tracking-widest hover:border-black disabled:opacity-30 disabled:hover:border-gray-200 transition-all"
+                  className="px-6 py-2 border border-gray-200 text-[11px] font-bold uppercase tracking-widest hover:border-primary hover:text-primary disabled:opacity-30 disabled:hover:border-gray-200 disabled:hover:text-current transition-all"
                 >
                   Previous
                 </button>
@@ -336,7 +335,7 @@ export default function App() {
                 <button 
                   disabled={offset + config.itemsPerPage >= totalNumResults}
                   onClick={() => setOffset(offset + config.itemsPerPage)}
-                  className="px-6 py-2 border border-gray-200 text-[11px] font-bold uppercase tracking-widest hover:border-black disabled:opacity-30 disabled:hover:border-gray-200 transition-all"
+                  className="px-6 py-2 border border-gray-200 text-[11px] font-bold uppercase tracking-widest hover:border-primary hover:text-primary disabled:opacity-30 disabled:hover:border-gray-200 disabled:hover:text-current transition-all"
                 >
                   Next
                 </button>
@@ -350,7 +349,7 @@ export default function App() {
       <div className="lg:hidden fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
         <button 
           onClick={() => setIsMobileFilterOpen(true)}
-          className="flex items-center gap-3 bg-black text-white px-10 py-4 rounded-full text-xs font-bold uppercase tracking-widest shadow-2xl active:scale-95 transition-all"
+          className="flex items-center gap-3 bg-primary text-white px-10 py-4 rounded-full text-xs font-bold uppercase tracking-widest shadow-2xl active:scale-95 transition-all"
         >
           <SlidersHorizontal size={18} /> Filter & Sort
         </button>
@@ -390,7 +389,7 @@ export default function App() {
                             onClick={() => toggleFilter(facet.key, opt.value)}
                             className={`text-left px-4 py-3 text-[11px] font-bold uppercase tracking-widest border transition-all ${
                               selectedFilters.some(f => f.field === facet.key && f.values.includes(opt.value))
-                                ? 'bg-black text-white border-black'
+                                ? 'bg-primary text-white border-primary'
                                 : 'bg-white text-gray-600 border-gray-100'
                             }`}
                           >
@@ -410,7 +409,7 @@ export default function App() {
               </div>
               <button 
                 onClick={() => setIsMobileFilterOpen(false)}
-                className="mt-6 w-full bg-black text-white py-4 font-bold uppercase text-xs tracking-widest"
+                className="mt-6 w-full bg-primary text-white py-4 font-bold uppercase text-xs tracking-widest"
               >
                 Show Results
               </button>
@@ -446,7 +445,7 @@ export default function App() {
 
 const SkeletonCard = () => (
   <div className="animate-pulse">
-    <div className="aspect-3/4 bg-gray-100 rounded-sm mb-4" />
+    <div className="aspect-square bg-gray-100 rounded-lg mb-4" />
     <div className="h-2 bg-gray-100 w-1/4 rounded-full mb-2" />
     <div className="h-3.5 bg-gray-100 w-3/4 rounded-full mb-3" />
     <div className="h-4 bg-gray-100 w-1/2 rounded-full" />
