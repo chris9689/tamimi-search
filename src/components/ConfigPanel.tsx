@@ -984,10 +984,20 @@ const NetworkTab = ({ log, onClear }: { log: RequestLogEntry[]; onClear: () => v
   );
 };
 
+// Extended search responses expose the machine-translated query at response[0].translatedQuery
+const extractTranslatedQuery = (content: unknown): string | null => {
+  if (!content || typeof content !== 'object') return null;
+  const obj = content as any;
+  const fromArray = Array.isArray(obj.response) ? obj.response[0]?.translatedQuery : undefined;
+  const candidate = fromArray ?? obj.translatedQuery;
+  return typeof candidate === 'string' && candidate.trim() ? candidate : null;
+};
+
 const DetailPane = ({ label, content, isError, collapsed }: { label: 'request' | 'response' | 'headers'; content: unknown; isError: boolean; collapsed?: boolean }) => {
   const [open, setOpen] = useLocalState(!collapsed);
   const isEmpty = content == null;
   const title = label === 'request' ? 'Request Body' : label === 'headers' ? 'Response Headers' : 'Response Body';
+  const translatedQuery = label === 'response' && !isError ? extractTranslatedQuery(content) : null;
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
@@ -1001,6 +1011,12 @@ const DetailPane = ({ label, content, isError, collapsed }: { label: 'request' |
       </button>
       {open && (
         <div className="border-t border-gray-200 bg-gray-900 p-4 overflow-x-auto custom-scrollbar max-h-72">
+          {translatedQuery && (
+            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-amber-400/40 bg-amber-400/10 px-3 py-2">
+              <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-900">Translated Query</span>
+              <span className="font-mono text-xs text-amber-100">{translatedQuery}</span>
+            </div>
+          )}
           {isEmpty ? (
             <span className="font-mono text-xs text-gray-500">—</span>
           ) : (
